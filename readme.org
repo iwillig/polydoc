@@ -1,0 +1,149 @@
+* polydoc
+
+[[https://pandoc.org/][pandoc]] is a powerful tool for parsing, combinding and processing text
+based documents. Pandoc also includes a filter system that allows for
+the trasformation of a document or sub elements
+
+This tool is designed to people use pandoc filter
+without beinging tied to the Python platform like most pandoc filters.
+
+It includes a set of pandoc filters that are GraalVM compiled to
+reduce the latency of your pandoc build.
+
+
+** Rational
+
+Documentation is a fundamental part of software engineering. There
+many differnt tools for managing your docs. polydoc offers a couple of
+advangates over many other systems. Pandoc is a powerful system for
+document managment and trasformation. Its supports a concept of
+"filter" functions. Most of these filter functions are implemented in
+platlforms that are not the JVM. Python, Node and go. If you are
+working on the JVM, it helpful to have to bring a new platform into
+your stack for just documentation.
+
+Besides providing a set of advance pandoc filters, polydoc provides a
+set of defaults that make building a document system for your code
+project easier.
+
+- uses pandoc and supports many format
+- provides
+
+
+** Tools
+*** TODO polydoc
+
+Documentation for the polydoc.
+
+*** TODO polydoc filter render-plantuml --help
+
+Processes all platuml code blocks in your project.
+
+*** TODO polydoc filter include --help
+
+*** TODO polydoc filter run-sqlite --help
+
+Runs the SQLite code and save the output to the document. Keeps the
+SQLite3 code.
+
+*** TODO polydoc filter run-clojure --help
+
+Runs the clojure code and prints the output to the file. Keeps the
+clojure code.
+
+*** TODO polydoc filter lint-clojure --help
+
+Lints the clojure code with clj-knodo.
+
+*** TODO polydoc filter run-javascript --help
+
+Runs the code in the JavaScript code blocks.
+
+*** TODO polydoc filter run-python --help
+
+Runs the run-python code.
+
+*** TODO polydoc book toc
+
+Prints the current table of contents to standard out.
+
+*** TODO polydoc book build
+
+Builds the entire book based on the toc of contents. Also builds the
+SQLite3 index for the book.
+
+*** TODO polydoc search
+
+Searches the documents using the full text search system.
+
+- book
+  - index
+  - metadata
+  - name
+- section
+  - content
+  - book_id refrences index
+  - hash
+
+*** TODO polydoc search sync
+
+Builds the index. Attempts to create the postgresql schema.
+
+*** TODO polydoc lint
+
+Lint the document with a grammar check. Maybe uses the Grammary API.
+
+*** TODO polydoc llm <prompt-name>
+
+Processes your document with an LLM Agent. You can define LLM Rules.
+
+*** TODO polydoc generate
+
+polydoc has a set of built in generators that help humans and LLM
+Agents create new documents. They are mustatche templated pandoc AST
+templates. You can use them with any format that pandoc supports.
+
+*** TODO polydoc view
+
+Builds the HTML and uses the SQLite3 index to power an interactive
+site. Serves the content via HTTP-kit.
+
+** Development
+
+This tool is written in JVM Clojure and compiled to native code via
+GraalVM.
+
+The Clojure Repl is the primary interface for development. There are
+two main namespaces, user and dev. We use the user namespace, which
+does not load any clojure code, and dev.
+
+When you connect to a repl, you will be in the user namespace. Run the
+(dev) function to load the dev namespace. In the dev namespaces there
+are serveral functions that allow you to lint and test this project.
+
+#+BEGIN_SRC clojure
+(refresh) ;; refresh all of the namespaces
+(lint)    ;; lint the project
+(run-all)     ;; run all of the tests
+#+END_SRC
+
+** Libraries
+
+- cli-matic
+- pandoc
+- pandoc filter
+- clojure.data.json
+- clojure.zippers
+
+
+** Install
+
+#+BEGIN_SRC bash
+brew bundle
+#+END_SRC
+
+
+#+BEGIN_SRC bash
+brew install polydoc
+polydoc --help
+#+END_SRC

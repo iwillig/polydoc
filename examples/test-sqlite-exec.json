@@ -1,0 +1,21 @@
+{
+  "pandoc-api-version": [1, 22],
+  "meta": {},
+  "blocks": [
+    {
+      "t": "Para",
+      "c": [{"t": "Str", "c": "Query"}, {"t": "Space"}, {"t": "Str", "c": "results:"}]
+    },
+    {
+      "t": "CodeBlock",
+      "c": [
+        ["", ["sqlite-exec"], []],
+        "SELECT 'Alice' as name, 30 as age UNION ALL SELECT 'Bob', 25"
+      ]
+    },
+    {
+      "t": "Para",
+      "c": [{"t": "Str", "c": "End"}, {"t": "Space"}, {"t": "Str", "c": "of"}, {"t": "Space"}, {"t": "Str", "c": "document"}]
+    }
+  ]
+}

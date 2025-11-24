@@ -1,0 +1,32 @@
+{
+  "pandoc-api-version": [1, 23],
+  "meta": {},
+  "blocks": [
+    {
+      "t": "Para",
+      "c": [
+        {"t": "Str", "c": "This"},
+        {"t": "Space"},
+        {"t": "Str", "c": "is"},
+        {"t": "Space"},
+        {"t": "Str", "c": "a"},
+        {"t": "Space"},
+        {"t": "Str", "c": "test."}
+      ]
+    },
+    {
+      "t": "CodeBlock",
+      "c": [
+        ["", ["clojure-exec"], []],
+        "(+ 1 2 3)"
+      ]
+    },
+    {
+      "t": "CodeBlock",
+      "c": [
+        ["", ["clojure"], []],
+        "(+ 4 5 6)"
+      ]
+    }
+  ]
+}
