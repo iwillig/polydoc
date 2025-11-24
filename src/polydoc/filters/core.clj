@@ -29,7 +29,8 @@
   - examples/ directory for complete filter examples"
   (:require [clojure.data.json :as json]
             [clojure.walk :as walk]
-            [clojure.java.io :as io]))
+            [clojure.java.io :as io]
+            [clojure.pprint]))
 
 ;; AST I/O Functions
 

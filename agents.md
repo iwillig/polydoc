@@ -374,6 +374,317 @@ Polydoc uses Metazoa for metadata tooling:
   (the-ns 'polydoc.main))
 ```
 
+### Using the clojure-skills CLI Tool
+
+The `clojure-skills` CLI tool provides comprehensive management for Clojure skills, prompts, implementation plans, and tasks. It uses a SQLite database backend for efficient searching and querying.
+
+#### Database Operations
+
+```bash
+# Initialize the database (first-time setup)
+clojure-skills db init
+
+# Sync skills and prompts from filesystem to database
+clojure-skills db sync
+
+# Show database statistics
+clojure-skills db stats
+
+# Reset database (WARNING: destructive)
+clojure-skills db reset
+```
+
+**When to use:**
+- `db init` - First time using clojure-skills in a project
+- `db sync` - After adding/modifying skill files
+- `db stats` - Check database health and content summary
+- `db reset` - Clean slate (use with caution)
+
+#### Skill Operations
+
+```bash
+# Search skills using full-text search (FTS5)
+clojure-skills skill search "database queries"
+clojure-skills skill search "validation" --limit 10
+
+# List all skills with metadata
+clojure-skills skill list
+clojure-skills skill list --category "libraries/database"
+
+# Show specific skill content as JSON
+clojure-skills skill show "next_jdbc"
+clojure-skills skill show "malli" --category "libraries/data_validation"
+```
+
+**Search tips:**
+- Use natural language queries: "how to validate data"
+- FTS5 supports phrase search: `"exact phrase"`
+- Filter by category to narrow results
+- Use `--limit` to control result count
+
+#### Prompt Operations
+
+```bash
+# Search prompts using full-text search
+clojure-skills prompt search "testing"
+clojure-skills prompt search "REPL workflow"
+
+# List all prompts with metadata
+clojure-skills prompt list
+
+# Show prompt content with metadata
+clojure-skills prompt show "repl-driven-dev"
+
+# Render prompt as plain markdown
+clojure-skills prompt render "testing-best-practices"
+```
+
+**Use cases:**
+- Find relevant development prompts
+- View prompt templates for LLM interactions
+- Render prompts for documentation
+
+#### Implementation Plan Management
+
+```bash
+# Create a new implementation plan
+clojure-skills plan create \
+  --name "Add SQLite filter" \
+  --description "Implement SQLite execution filter for code blocks"
+
+# List all implementation plans
+clojure-skills plan list
+clojure-skills plan list --status pending
+
+# Show detailed plan information
+clojure-skills plan show 1
+
+# Update a plan
+clojure-skills plan update 1 \
+  --status in-progress \
+  --notes "Started implementation"
+
+# Mark plan as completed
+clojure-skills plan complete 1
+
+# Delete a plan (requires --force)
+clojure-skills plan delete 1 --force
+```
+
+**Plan workflow:**
+1. Create plan with name and description
+2. Associate skills with plan (see below)
+3. Create task lists for plan
+4. Update status as work progresses
+5. Complete when done
+
+#### Plan Skill Associations
+
+```bash
+# Associate a skill with a plan
+clojure-skills plan skill add 1 "next_jdbc"
+clojure-skills plan skill add 1 "honeysql"
+
+# List skills associated with a plan
+clojure-skills plan skill list 1
+
+# Remove skill association
+clojure-skills plan skill remove 1 "next_jdbc"
+```
+
+**Use for:**
+- Track which skills are needed for a plan
+- Document dependencies
+- Quick reference during implementation
+
+#### Task List Management
+
+```bash
+# Create a task list for a plan
+clojure-skills plan task-list create 1 \
+  --name "Core implementation" \
+  --description "Main filter implementation tasks"
+
+# List task lists for a plan
+clojure-skills plan task-list list 1
+
+# Show task list details
+clojure-skills task-list show 1
+
+# Delete task list (requires --force)
+clojure-skills task-list delete 1 --force
+```
+
+#### Task Operations
+
+```bash
+# Create a task in a task list
+clojure-skills task-list task create 1 \
+  --description "Parse SQLite code block attributes" \
+  --order 1
+
+# List tasks in a task list
+clojure-skills task-list task list 1
+
+# Show task details
+clojure-skills task show 1
+
+# Mark task as completed
+clojure-skills task complete 1
+
+# Mark task as not completed
+clojure-skills task uncomplete 1
+
+# Delete task (requires --force)
+clojure-skills task delete 1 --force
+```
+
+#### Plan Results
+
+```bash
+# Set plan result
+clojure-skills plan result set 1 \
+  --result "Successfully implemented SQLite filter with error handling"
+
+# Show plan result
+clojure-skills plan result show 1
+
+# Delete plan result
+clojure-skills plan result delete 1
+```
+
+#### Typical Development Workflow with clojure-skills
+
+```bash
+# 1. Initialize database (first time only)
+clojure-skills db init
+
+# 2. Sync skills from filesystem
+clojure-skills db sync
+
+# 3. Search for relevant skills
+clojure-skills skill search "database"
+
+# 4. Create implementation plan
+clojure-skills plan create \
+  --name "Database integration" \
+  --description "Add database support for document indexing"
+
+# 5. Associate relevant skills
+clojure-skills plan skill add 1 "next_jdbc"
+clojure-skills plan skill add 1 "honeysql"
+clojure-skills plan skill add 1 "sqlite_jdbc"
+
+# 6. Create task list
+clojure-skills plan task-list create 1 \
+  --name "Implementation tasks"
+
+# 7. Add tasks
+clojure-skills task-list task create 1 \
+  --description "Create database schema" \
+  --order 1
+
+clojure-skills task-list task create 1 \
+  --description "Implement query functions" \
+  --order 2
+
+# 8. Work on tasks, marking completed
+clojure-skills task complete 1
+
+# 9. Update plan status
+clojure-skills plan update 1 --status in-progress
+
+# 10. When done, complete plan
+clojure-skills plan complete 1
+
+# 11. Set result
+clojure-skills plan result set 1 \
+  --result "Database integration completed with full test coverage"
+```
+
+#### Integration with REPL Workflow
+
+```clojure
+;; In your REPL, you can shell out to clojure-skills
+(require '[clojure.java.shell :as shell])
+
+;; Search for skills
+(shell/sh "clojure-skills" "skill" "search" "testing")
+
+;; Or use programmatically if you add clojure-skills as a dependency
+(require '[clojure-skills.core :as skills])
+
+;; This assumes clojure-skills can be used as a library
+;; Check the actual API documentation for details
+```
+
+#### Configuration
+
+The tool looks for skills in these locations (in order):
+1. `.clojure-skills/` in current directory
+2. `~/.clojure-skills/` in user home
+3. System-wide installation location
+
+Database is stored at:
+- `.clojure-skills/clojure-skills.db` (project-local)
+- Or `~/.clojure-skills/clojure-skills.db` (user-global)
+
+#### Best Practices
+
+**DO:**
+- Run `db sync` after modifying skill files
+- Use descriptive plan names and descriptions
+- Associate all relevant skills with plans
+- Break plans into manageable task lists
+- Order tasks logically
+- Update plan status as work progresses
+- Document results when completing plans
+
+**DON'T:**
+- Use `db reset` without backing up data
+- Delete plans/tasks without `--force` flag (safety feature)
+- Forget to sync after adding new skills
+- Create overly granular tasks (keep them meaningful)
+- Leave plans in "in-progress" indefinitely
+
+#### Troubleshooting
+
+**Database not found:**
+```bash
+# Initialize database first
+clojure-skills db init
+```
+
+**No skills found after init:**
+```bash
+# Sync skills from filesystem
+clojure-skills db sync
+
+# Check stats to verify
+clojure-skills db stats
+```
+
+**Search returns no results:**
+```bash
+# Check database has content
+clojure-skills db stats
+
+# Try broader search terms
+clojure-skills skill search "test"
+
+# List all to verify skills exist
+clojure-skills skill list
+```
+
+**Plan operations fail:**
+```bash
+# Verify plan exists
+clojure-skills plan list
+
+# Check plan ID is correct
+clojure-skills plan show <id>
+```
+
 ## Best Practices for Polydoc Development
 
 ### DO:
@@ -608,7 +919,7 @@ As an LLM agent working on this project, remember:
 - **Database**: `next_jdbc`, `honeysql`, `sqlite_jdbc`
 - **CLI**: `cli_matic`, `bling`
 - **Testing**: `kaocha`, `matcher_combinators`, `test_check`
-- **Tools**: `clojure_lsp_api`, `metazoa`, `hashp-debugging`
+- **Tools**: `clojure_lsp_api`, `metazoa`, `hashp-debugging`, `clojure-skills`
 
 ### External Documentation
 
@@ -623,18 +934,25 @@ As an LLM agent working on this project, remember:
 
 When working on Polydoc:
 
-1. **Gather** - Read code, explore with REPL tools, use clojure-lsp for diagnostics
-2. **Action** - Make focused changes with read/edit/write tools
-3. **Verify** - Reload, test, check diagnostics, run tests
+1. **Gather** - Read code, explore with REPL tools, use clojure-lsp for diagnostics, search skills with clojure-skills
+2. **Action** - Make focused changes with read/edit/write tools, track work with implementation plans
+3. **Verify** - Reload, test, check diagnostics, run tests, complete tasks
 
 **Key principles:**
 - Read before writing
 - Test after editing  
 - Use static analysis (clojure-lsp) + runtime testing (REPL)
 - Use hashp (#p) for debugging during development
+- Use clojure-skills to find relevant skills and manage implementation plans
 - Communicate clearly
 - Fix errors immediately
 - Follow Clojure idioms
 - Leverage existing libraries
+
+**Tool usage:**
+- `clojure-skills` - Search skills, manage plans, track tasks
+- `clojure-lsp` - Static analysis, refactoring, diagnostics
+- `hashp` - Debug printing during development
+- `metazoa` - Metadata exploration and documentation
 
 This ensures reliable code changes that work correctly in the Polydoc documentation processing system.

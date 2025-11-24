@@ -1,7 +1,7 @@
 # Polydoc Development Progress
 
 **Last Updated:** 2025-11-24  
-**Current Status:** Phase 2 in progress (11/48 tasks complete, 22.9%)
+**Current Status:** Phase 2 in progress (15/48 tasks complete, 31.3%)
 
 ## Completed Work
 
@@ -50,7 +50,7 @@
 - `examples/test-clojure-exec.json` - Sample Pandoc AST
 - `examples/clojure-exec-demo.md` - Markdown examples
 
-### ✅ Phase 2: Additional Filters (2/8 tasks, 25%)
+### ✅ Phase 2: Additional Filters (6/8 tasks, 75%)
 
 #### 2.1 SQLite Execution Filter (Tasks 223-224)
 **Status:** Complete
@@ -82,21 +82,94 @@
   - Window functions, error handling
   - Usage with Pandoc
 
+#### 2.2 PlantUML Rendering Filter (Tasks 225-226)
+**Status:** Complete
+
+**Files Created:**
+- `src/polydoc/filters/plantuml.clj` - Full implementation
+  - Detects `plantuml` and `uml` classes
+  - Shells out to PlantUML command-line tool
+  - Uses pipe mode for efficiency (stdin/stdout)
+  - Supports multiple output formats (SVG, PNG, TXT, PDF, EPS, LaTeX)
+  - Embeds binary formats as base64 data URIs
+  - Text formats as CodeBlock for easy viewing
+  - Error handling with informative messages
+
+- `test/polydoc/filters/plantuml_test.clj` - 14 comprehensive tests
+  - Unit tests for all functions
+  - Format conversion tests
+  - SVG and TXT rendering tests
+  - Error handling tests
+  - Integration tests (full AST transformation)
+  - Multiple diagrams in single document
+
+**Files Created (Examples):**
+- `examples/plantuml-demo.md` - Comprehensive UML examples
+  - Sequence diagrams, class diagrams, activity diagrams
+  - Text output (ASCII art) examples
+  - Format attribute usage
+  - Usage with Pandoc
+
+#### 2.3 Include Filter (Tasks 227-228)
+**Status:** Complete
+
+**Files Created:**
+- `src/polydoc/filters/include.clj` - Full implementation
+  - Detects `include` class on code blocks
+  - Three include modes: parse, code, raw
+  - Parse mode: Parses Markdown and includes AST nodes
+  - Code mode: Includes as syntax-highlighted CodeBlock
+  - Raw mode: Includes as RawBlock without parsing
+  - Path resolution (relative/absolute, normalization)
+  - Cycle detection to prevent infinite loops
+  - Max depth limit (10 levels)
+  - Base directory attribute support
+  - Language attribute for code mode syntax highlighting
+
+- `test/polydoc/filters/include_test.clj` - 21 comprehensive tests
+  - Unit tests for all functions
+  - Path resolution and normalization tests
+  - File reading tests (success and error cases)
+  - Markdown parsing tests
+  - All three include modes tested
+  - Cycle detection tests
+  - Max depth tests
+  - Integration tests (full AST transformation)
+  - Multiple includes in single document
+
+**Test Fixtures Created:**
+- `test/fixtures/include/simple.md` - Simple Markdown file for testing
+- `test/fixtures/include/code.clj` - Clojure code file for testing
+
+**Files Created (Examples):**
+- `examples/include-demo.md` - Comprehensive include examples
+  - Basic file inclusion (parse mode)
+  - Code block inclusion with syntax highlighting
+  - Raw Markdown inclusion
+  - Relative paths with base directory
+  - All three modes demonstrated
+  - Cycle detection examples
+  - Error handling examples
+  - Use cases and best practices
+
 ## Test Suite Status
 
 **Current Test Results:**
 ```
-28 tests, 91 assertions, 0 failures ✅
+63 tests, 203 assertions, 0 failures ✅
 ```
 
 **Test Coverage by Namespace:**
 - `polydoc.filters.core-test`: 8 tests (AST utilities)
 - `polydoc.filters.clojure-exec-test`: 9 tests (Clojure execution)
 - `polydoc.filters.sqlite-exec-test`: 11 tests (SQL execution)
+- `polydoc.filters.plantuml-test`: 14 tests (PlantUML rendering)
+- `polydoc.filters.include-test`: 21 tests (file inclusion)
 
 **Performance:**
-- Total test time: ~0.29 seconds
-- Slowest: `sqlite-exec-test` (0.24s) - includes SQLite initialization
+- Total test time: ~2.7 seconds
+- Slowest: `plantuml-test` (2.5s) - includes PlantUML process spawning
+- Second slowest: `sqlite-exec-test` (0.1s) - includes SQLite initialization
 - All tests passing consistently
 
 ## Working Features
@@ -114,9 +187,17 @@ clojure -M:main filter -t clojure-exec -i input.json -o output.json
 clojure -M:main filter -t sqlite-exec -i input.json -o output.json
 clojure -M:main filter -t sqlite -i input.json  # Also works
 
+# PlantUML rendering filter
+clojure -M:main filter -t plantuml -i input.json -o output.json
+
+# Include filter
+clojure -M:main filter -t include -i input.json -o output.json
+
 # Pandoc integration
 pandoc doc.md -t json | clojure -M:main filter -t clojure-exec | pandoc -f json -o out.html
 pandoc doc.md -t json | clojure -M:main filter -t sqlite-exec | pandoc -f json -o out.html
+pandoc doc.md -t json | clojure -M:main filter -t plantuml | pandoc -f json -o out.html
+pandoc doc.md -t json | clojure -M:main filter -t include | pandoc -f json -o out.html
 ```
 
 ### Available Filters
@@ -153,6 +234,49 @@ SELECT * FROM users LIMIT 10;
 ```
 ````
 
+#### plantuml / uml
+- Renders UML diagrams using PlantUML
+- Supports multiple output formats
+- Embeds images as data URIs or CodeBlocks
+- Handles sequence, class, activity, and other diagram types
+
+**Usage:**
+````markdown
+```{.plantuml}
+@startuml
+Alice -> Bob: Hello
+Bob -> Alice: Hi!
+@enduml
+```
+
+```{.plantuml format=txt}
+@startuml
+class User
+@enduml
+```
+````
+
+#### include
+- Includes external files in documentation
+- Three modes: parse (Markdown), code (syntax highlighted), raw (unprocessed)
+- Cycle detection and max depth protection
+- Relative and absolute path support
+
+**Usage:**
+````markdown
+```{.include}
+path/to/file.md
+```
+
+```{.include mode=code lang=clojure}
+src/example.clj
+```
+
+```{.include mode=raw base="/docs"}
+template.html
+```
+````
+
 ## File Structure
 
 ```
@@ -162,19 +286,29 @@ polydoc/
 │   └── filters/
 │       ├── core.clj             # Shared utilities (AST, I/O)
 │       ├── clojure_exec.clj     # Clojure execution filter ✅
-│       └── sqlite_exec.clj      # SQLite execution filter ✅
+│       ├── sqlite_exec.clj      # SQLite execution filter ✅
+│       ├── plantuml.clj         # PlantUML rendering filter ✅
+│       └── include.clj          # File inclusion filter ✅
 │
-├── test/polydoc/filters/
-│   ├── core_test.clj            # 8 tests ✅
-│   ├── clojure_exec_test.clj    # 9 tests ✅
-│   └── sqlite_exec_test.clj     # 11 tests ✅
+├── test/polydoc/
+│   ├── fixtures/include/        # Test fixtures ✅
+│   │   ├── simple.md
+│   │   └── code.clj
+│   └── filters/
+│       ├── core_test.clj        # 8 tests ✅
+│       ├── clojure_exec_test.clj # 9 tests ✅
+│       ├── sqlite_exec_test.clj  # 11 tests ✅
+│       ├── plantuml_test.clj     # 14 tests ✅
+│       └── include_test.clj      # 21 tests ✅
 │
 ├── examples/
-│   ├── README.md
+│   ├── README.md                 # Updated ✅
 │   ├── test-clojure-exec.json
 │   ├── clojure-exec-demo.md
-│   ├── test-sqlite-exec.json    # ✅ New
-│   └── sqlite-exec-demo.md      # ✅ New
+│   ├── test-sqlite-exec.json
+│   ├── sqlite-exec-demo.md
+│   ├── plantuml-demo.md          # ✅ New
+│   └── include-demo.md           # ✅ New
 │
 ├── README.md                     # Complete documentation
 ├── tests.edn                     # Kaocha config
@@ -184,29 +318,19 @@ polydoc/
 
 ## Next Steps
 
-### Immediate: Continue Phase 2 (6 remaining tasks)
+### Immediate: Continue Phase 2 (2 remaining tasks)
 
-**Task 225: PlantUML Rendering Filter**
-- Create `src/polydoc/filters/plantuml.clj`
-- Shell out to PlantUML JAR
-- Convert diagrams to images
-- Replace code blocks with image references
-- Add tests
-
-**Task 226: JavaScript Execution Filter**
-- Use GraalVM JS engine
+**Task 229: JavaScript Execution Filter**
+- Use GraalVM JS engine or Node.js
 - Execute JavaScript code blocks
 - Format output similar to Clojure filter
+- Add tests and examples
 
-**Task 227: Python Execution Filter**
+**Task 230: Python Execution Filter**
 - Shell out to Python interpreter
 - Execute Python code blocks
 - Capture stdout/stderr
-
-**Task 228-230: Additional Language Filters**
-- Shell execution utilities
-- Language-specific formatting
-- Error handling patterns
+- Add tests and examples
 
 ### Phase 3: Book Building (8 tasks)
 - YAML configuration parsing
@@ -348,7 +472,7 @@ None identified yet. Code quality is high:
 
 **Progress Summary:**
 - ✅ Phase 1: 9/9 tasks (100%)
-- 🚧 Phase 2: 2/8 tasks (25%)
-- Overall: 11/48 tasks (22.9%)
+- 🚧 Phase 2: 6/8 tasks (75%)
+- Overall: 15/48 tasks (31.3%)
 
-**Next Session:** Implement PlantUML rendering filter (Task 225)
+**Next Session:** Implement JavaScript and Python execution filters (Tasks 229-230), or move to Phase 3 (Book Building)

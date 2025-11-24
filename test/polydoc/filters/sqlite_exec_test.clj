@@ -1,8 +1,7 @@
 (ns polydoc.filters.sqlite-exec-test
   (:require [clojure.test :refer [deftest testing is]]
             [clojure.string :as str]
-            [polydoc.filters.sqlite-exec :as sqlite-exec]
-            [polydoc.filters.core :as core]))
+            [polydoc.filters.sqlite-exec :as sqlite-exec]))
 
 (deftest test-has-class?
   (testing "has-class? detects class in attrs"

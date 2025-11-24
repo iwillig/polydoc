@@ -34,12 +34,36 @@ pandoc examples/sqlite-exec-demo.md -t json | \
   pandoc -f json -o examples/sqlite-exec-output.html
 ```
 
+### PlantUML Filter
+
+Render UML diagrams from PlantUML code:
+
+```bash
+# Process the example file
+pandoc examples/plantuml-demo.md -t json | \
+  clojure -M:main filter -t plantuml | \
+  pandoc -f json -o examples/plantuml-output.html
+```
+
+### Include Filter
+
+Include external files in your documentation:
+
+```bash
+# Process the example file
+pandoc examples/include-demo.md -t json | \
+  clojure -M:main filter -t include | \
+  pandoc -f json -o examples/include-output.html
+```
+
 ## Example Files
 
 - `test-clojure-exec.json` - Simple Pandoc AST with clojure-exec blocks
 - `clojure-exec-demo.md` - Markdown file demonstrating clojure-exec usage
 - `test-sqlite-exec.json` - Simple Pandoc AST with sqlite-exec blocks
 - `sqlite-exec-demo.md` - Markdown file demonstrating sqlite-exec usage
+- `plantuml-demo.md` - Markdown file demonstrating PlantUML diagrams
+- `include-demo.md` - Markdown file demonstrating file inclusion
 - `README.md` - This file
 
 ## Expected Output
