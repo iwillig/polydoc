@@ -271,7 +271,12 @@
        ;; Max depth reached, return ast unchanged
        ast
        
-       ;; Process includes
-       (core/walk-ast
-        #(transform-include-block % (assoc opts :current-depth current-depth))
-        ast)))))
+        ;; Process includes
+        (core/walk-ast
+         #(transform-include-block % (assoc opts :current-depth current-depth))
+         ast)))))
+
+(defn main
+  "Main entry point for CLI usage."
+  [{:keys [input output]}]
+  (core/execute-filter include-filter input output))

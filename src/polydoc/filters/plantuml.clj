@@ -199,3 +199,8 @@
   Walks the AST and transforms PlantUML code blocks to images."
   [ast]
   (core/walk-ast transform-plantuml-block ast))
+
+(defn main
+  "Main entry point for CLI usage."
+  [{:keys [input output]}]
+  (core/execute-filter plantuml-filter input output))

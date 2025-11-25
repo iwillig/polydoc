@@ -23,6 +23,15 @@ The project implements several types of Pandoc filters:
 - **Build system**: Generate books with table of contents and full-text search
 - **Interactive viewer**: HTTP-based document browser with search
 
+## Allowed Command-Line Tools
+
+As an LLM agent, you are restricted to using **only** these command-line tools:
+
+1. **clj-nrepl-eval** - For evaluating Clojure code via nREPL
+2. **clojure-skills** - For searching skills, managing plans, and tracking tasks
+
+All other interactions must happen through the **REPL** using the connected nREPL server (port 7889).
+
 ## Dependencies Analysis
 
 ### Core Dependencies (deps.edn)
@@ -94,21 +103,20 @@ polydoc/
 ├── resources/             # Resources
 ├── classes/               # Compiled classes
 ├── deps.edn              # Dependencies
-├── bb.edn                # Babashka config
 └── README.org            # Project documentation
 ```
 
 ## Agent Development Workflow
 
-When working on Polydoc, follow the **Gather-Action-Verify** loop pattern:
+When working on Polydoc, follow the **Gather-Action-Verify** loop pattern using **only the REPL** and allowed command-line tools.
 
 ### 1. Gather Context
 
-**Before making any changes:**
+**Before making any changes, explore via REPL:**
 
 ```clojure
-;; Connect to the nREPL (port 7889 configured in deps.edn)
-;; Start REPL: clojure -M:nrepl
+;; The nREPL server is running on port 7889
+;; Use clj-nrepl-eval to interact with it
 
 ;; Explore the codebase
 (require '[clojure-lsp.api :as lsp-api])
@@ -132,6 +140,22 @@ When working on Polydoc, follow the **Gather-Action-Verify** loop pattern:
 
 ;; Search for symbols
 (apropos "filter")
+```
+
+**Using clj-nrepl-eval:**
+
+```bash
+# Evaluate a single expression
+clj-nrepl-eval -p 7889 "(require '[polydoc.main])"
+
+# List namespaces
+clj-nrepl-eval -p 7889 "(map ns-name (all-ns))"
+
+# Check function documentation
+clj-nrepl-eval -p 7889 "(doc polydoc.main/some-function)"
+
+# Test a function
+clj-nrepl-eval -p 7889 "(polydoc.main/some-function test-data)"
 ```
 
 **Read files strategically:**
@@ -159,7 +183,7 @@ When working on Polydoc, follow the **Gather-Action-Verify** loop pattern:
 ;; - Make targeted edits
 ;; - Save the file
 
-;; Clean up after editing
+;; Clean up after editing (via REPL)
 (require '[clojure-lsp.api :as lsp-api])
 (lsp-api/clean-ns! {:namespace '[polydoc.main]})
 (lsp-api/format! {:namespace '[polydoc.main]})
@@ -168,19 +192,31 @@ When working on Polydoc, follow the **Gather-Action-Verify** loop pattern:
 (lsp-api/rename! {:from 'old-fn :to 'new-fn})
 ```
 
+**Using clj-nrepl-eval for cleanup:**
+
+```bash
+# Clean namespace imports
+clj-nrepl-eval -p 7889 "(require '[clojure-lsp.api :as lsp-api])"
+clj-nrepl-eval -p 7889 "(lsp-api/clean-ns! {:namespace '[polydoc.main]})"
+
+# Format code
+clj-nrepl-eval -p 7889 "(lsp-api/format! {:namespace '[polydoc.main]})"
+```
+
 **Tool selection guide:**
 
 | Task | Tool | Example |
 |------|------|---------|
 | Read code | `read` | Read source files |
 | Edit code | `edit` or `write` | Modify functions |
-| Rename safely | `lsp-api/rename!` | Updates all references |
-| Clean imports | `lsp-api/clean-ns!` | Removes unused requires |
-| Format code | `lsp-api/format!` | Applies formatting rules |
+| Eval code | `clj-nrepl-eval` | Test via nREPL |
+| Rename safely | `lsp-api/rename!` (via REPL) | Updates all references |
+| Clean imports | `lsp-api/clean-ns!` (via REPL) | Removes unused requires |
+| Format code | `lsp-api/format!` (via REPL) | Applies formatting rules |
 
 ### 3. Verify Output
 
-**Always verify changes:**
+**Always verify changes via REPL:**
 
 ```clojure
 ;; 1. Reload the namespace
@@ -200,9 +236,23 @@ When working on Polydoc, follow the **Gather-Action-Verify** loop pattern:
 ;; 5. Run tests (if they exist)
 (require 'polydoc.main-test :reload)
 (clojure.test/run-tests 'polydoc.main-test)
+```
 
-;; Or use Kaocha
-;; Shell: clojure -M:test
+**Using clj-nrepl-eval for verification:**
+
+```bash
+# Reload namespace
+clj-nrepl-eval -p 7889 "(require 'polydoc.main :reload)"
+
+# Test the function
+clj-nrepl-eval -p 7889 "(polydoc.main/your-function test-input)"
+
+# Test edge cases
+clj-nrepl-eval -p 7889 "(polydoc.main/your-function nil)"
+
+# Run tests
+clj-nrepl-eval -p 7889 "(require 'polydoc.main-test :reload)"
+clj-nrepl-eval -p 7889 "(clojure.test/run-tests 'polydoc.main-test)"
 ```
 
 **Verification checklist:**
@@ -224,16 +274,16 @@ When working on Polydoc, follow the **Gather-Action-Verify** loop pattern:
 - What external tools are needed? (e.g., PlantUML, SQLite)
 - How should errors be handled?
 
-**Implementation pattern:**
+**Implementation pattern (via REPL):**
 
 ```clojure
-;; 1. Read existing filter for reference
-;; Example: filters that process code blocks
+;; 1. Read existing filter for reference (use read tool)
 
-;; 2. Define filter function
+;; 2. Prototype the filter function in REPL
 (defn process-my-filter
   "Processes [specific element type] in Pandoc AST."
   [ast]
+  (require '[clojure.walk :as walk])
   (walk/postwalk
     (fn [node]
       (if (matches? node)
@@ -241,27 +291,54 @@ When working on Polydoc, follow the **Gather-Action-Verify** loop pattern:
         node))
     ast))
 
-;; 3. Add CLI command in main.clj
-;; Use cli-matic structure
-
-;; 4. Test with sample Pandoc AST
+;; 3. Test with sample Pandoc AST
+(def sample-ast {:t "Document" :c [...sample data...]})
 (process-my-filter sample-ast)
+
+;; 4. Once tested, edit main.clj to add the function
+;; 5. Add CLI command using cli-matic structure
+```
+
+**Using clj-nrepl-eval:**
+
+```bash
+# Test the prototype
+clj-nrepl-eval -p 7889 <<'EOF'
+(defn process-my-filter [ast]
+  (require '[clojure.walk :as walk])
+  (walk/postwalk
+    (fn [node]
+      (if (matches? node)
+        (transform node)
+        node))
+    ast))
+EOF
+
+# Test with sample data
+clj-nrepl-eval -p 7889 "(process-my-filter sample-ast)"
 ```
 
 ### Working with Pandoc AST
 
-Pandoc represents documents as JSON AST. Key points:
+Pandoc represents documents as JSON AST. Test transformations via REPL:
 
 ```clojure
-;; Parse JSON AST from stdin/file
+;; Parse JSON AST
 (require '[clojure.data.json :as json])
 (def ast (json/read-str (slurp "input.json") :key-fn keyword))
 
 ;; Walk and transform AST
 (require '[clojure.walk :as walk])
 
-;; Emit modified AST to stdout
-(println (json/write-str modified-ast))
+;; Test transformations
+(walk/postwalk
+  (fn [node]
+    (if (map? node)
+      (do
+        (println "Node type:" (:t node))
+        node)
+      node))
+  ast)
 ```
 
 **Common AST patterns:**
@@ -272,7 +349,7 @@ Pandoc represents documents as JSON AST. Key points:
 
 ### Database Operations
 
-Polydoc uses SQLite for search indexing:
+Polydoc uses SQLite for search indexing. Test queries via REPL:
 
 ```clojure
 (require '[next.jdbc :as jdbc])
@@ -296,32 +373,58 @@ Polydoc uses SQLite for search indexing:
                         :hash "..."}]}))
 ```
 
+**Using clj-nrepl-eval:**
+
+```bash
+# Test database connection
+clj-nrepl-eval -p 7889 <<'EOF'
+(require '[next.jdbc :as jdbc])
+(def db {:dbtype "sqlite" :dbname "polydoc.db"})
+(def ds (jdbc/get-datasource db))
+EOF
+
+# Run query
+clj-nrepl-eval -p 7889 <<'EOF'
+(require '[honey.sql :as sql])
+(jdbc/execute! ds
+  (sql/format {:select [:*]
+               :from [:sections]
+               :limit 5}))
+EOF
+```
+
 ### Adding CLI Commands
 
-Polydoc uses cli-matic for command-line interface:
+Polydoc uses cli-matic for command-line interface. Prototype in REPL first:
 
 ```clojure
-;; In main.clj, add to command configuration
-{:command "my-command"
- :description "Does something useful"
- :opts [{:option "input"
-         :short "i"
-         :as "Input file"
-         :type :string
-         :required true}]
- :runs my-command-fn}
-
-;; Implement the function
+;; 1. Test the command function in REPL
 (defn my-command-fn
   [{:keys [input]}]
-  ;; Process input
-  (println "Processing:" input))
+  (println "Processing:" input)
+  ;; ... implementation ...
+  )
+
+;; 2. Test it
+(my-command-fn {:input "test.md"})
+
+;; 3. Once working, edit main.clj to add command configuration
+;; {:command "my-command"
+;;  :description "Does something useful"
+;;  :opts [{:option "input"
+;;          :short "i"
+;;          :as "Input file"
+;;          :type :string
+;;          :required true}]
+;;  :runs my-command-fn}
 ```
 
 ### Using Debugging Tools
 
+Use hashp for debugging during REPL development:
+
 ```clojure
-;; hashp - Quick debugging with #p reader macro
+;; Install hashp in REPL session
 (require '[hashp.install :as hashp])
 (hashp/install!)
 
@@ -349,9 +452,24 @@ Polydoc uses cli-matic for command-line interface:
   (/ c 2))
 ```
 
+**Using clj-nrepl-eval:**
+
+```bash
+# Install hashp
+clj-nrepl-eval -p 7889 "(require '[hashp.install :as hashp])"
+clj-nrepl-eval -p 7889 "(hashp/install!)"
+
+# Test with debugging
+clj-nrepl-eval -p 7889 <<'EOF'
+(defn calculate [x y]
+  (+ #p (* x 2) #p (/ y 3)))
+(calculate 10 9)
+EOF
+```
+
 ### Working with Metadata
 
-Polydoc uses Metazoa for metadata tooling:
+Use Metazoa for metadata tooling via REPL:
 
 ```clojure
 (require '[glossa.metazoa :as meta])
@@ -374,350 +492,97 @@ Polydoc uses Metazoa for metadata tooling:
   (the-ns 'polydoc.main))
 ```
 
-### Using the clojure-skills CLI Tool
+### Using clojure-skills
 
-The `clojure-skills` CLI tool provides comprehensive management for Clojure skills, prompts, implementation plans, and tasks. It uses a SQLite database backend for efficient searching and querying.
-
-#### Database Operations
+The clojure-skills CLI tool is one of the allowed command-line tools. Use it for managing skills, prompts, and implementation plans:
 
 ```bash
-# Initialize the database (first-time setup)
+# Initialize database (first time only)
 clojure-skills db init
 
-# Sync skills and prompts from filesystem to database
+# Sync skills from filesystem
 clojure-skills db sync
 
-# Show database statistics
-clojure-skills db stats
+# Search for relevant skills
+clojure-skills skill search "database"
 
-# Reset database (WARNING: destructive)
-clojure-skills db reset
-```
-
-**When to use:**
-- `db init` - First time using clojure-skills in a project
-- `db sync` - After adding/modifying skill files
-- `db stats` - Check database health and content summary
-- `db reset` - Clean slate (use with caution)
-
-#### Skill Operations
-
-```bash
-# Search skills using full-text search (FTS5)
-clojure-skills skill search "database queries"
-clojure-skills skill search "validation" --limit 10
-
-# List all skills with metadata
-clojure-skills skill list
-clojure-skills skill list --category "libraries/database"
-
-# Show specific skill content as JSON
+# Show specific skill
 clojure-skills skill show "next_jdbc"
-clojure-skills skill show "malli" --category "libraries/data_validation"
-```
 
-**Search tips:**
-- Use natural language queries: "how to validate data"
-- FTS5 supports phrase search: `"exact phrase"`
-- Filter by category to narrow results
-- Use `--limit` to control result count
+# List all skills
+clojure-skills skill list
 
-#### Prompt Operations
-
-```bash
-# Search prompts using full-text search
-clojure-skills prompt search "testing"
-clojure-skills prompt search "REPL workflow"
-
-# List all prompts with metadata
-clojure-skills prompt list
-
-# Show prompt content with metadata
-clojure-skills prompt show "repl-driven-dev"
-
-# Render prompt as plain markdown
-clojure-skills prompt render "testing-best-practices"
-```
-
-**Use cases:**
-- Find relevant development prompts
-- View prompt templates for LLM interactions
-- Render prompts for documentation
-
-#### Implementation Plan Management
-
-```bash
-# Create a new implementation plan
+# Create implementation plan
 clojure-skills plan create \
   --name "Add SQLite filter" \
   --description "Implement SQLite execution filter for code blocks"
 
-# List all implementation plans
+# List plans
 clojure-skills plan list
-clojure-skills plan list --status pending
 
-# Show detailed plan information
+# Show plan details
 clojure-skills plan show 1
 
-# Update a plan
-clojure-skills plan update 1 \
-  --status in-progress \
-  --notes "Started implementation"
-
-# Mark plan as completed
-clojure-skills plan complete 1
-
-# Delete a plan (requires --force)
-clojure-skills plan delete 1 --force
-```
-
-**Plan workflow:**
-1. Create plan with name and description
-2. Associate skills with plan (see below)
-3. Create task lists for plan
-4. Update status as work progresses
-5. Complete when done
-
-#### Plan Skill Associations
-
-```bash
-# Associate a skill with a plan
+# Associate skills with plan
 clojure-skills plan skill add 1 "next_jdbc"
 clojure-skills plan skill add 1 "honeysql"
 
-# List skills associated with a plan
-clojure-skills plan skill list 1
-
-# Remove skill association
-clojure-skills plan skill remove 1 "next_jdbc"
-```
-
-**Use for:**
-- Track which skills are needed for a plan
-- Document dependencies
-- Quick reference during implementation
-
-#### Task List Management
-
-```bash
-# Create a task list for a plan
-clojure-skills plan task-list create 1 \
-  --name "Core implementation" \
-  --description "Main filter implementation tasks"
-
-# List task lists for a plan
-clojure-skills plan task-list list 1
-
-# Show task list details
-clojure-skills task-list show 1
-
-# Delete task list (requires --force)
-clojure-skills task-list delete 1 --force
-```
-
-#### Task Operations
-
-```bash
-# Create a task in a task list
-clojure-skills task-list task create 1 \
-  --description "Parse SQLite code block attributes" \
-  --order 1
-
-# List tasks in a task list
-clojure-skills task-list task list 1
-
-# Show task details
-clojure-skills task show 1
-
-# Mark task as completed
-clojure-skills task complete 1
-
-# Mark task as not completed
-clojure-skills task uncomplete 1
-
-# Delete task (requires --force)
-clojure-skills task delete 1 --force
-```
-
-#### Plan Results
-
-```bash
-# Set plan result
-clojure-skills plan result set 1 \
-  --result "Successfully implemented SQLite filter with error handling"
-
-# Show plan result
-clojure-skills plan result show 1
-
-# Delete plan result
-clojure-skills plan result delete 1
-```
-
-#### Typical Development Workflow with clojure-skills
-
-```bash
-# 1. Initialize database (first time only)
-clojure-skills db init
-
-# 2. Sync skills from filesystem
-clojure-skills db sync
-
-# 3. Search for relevant skills
-clojure-skills skill search "database"
-
-# 4. Create implementation plan
-clojure-skills plan create \
-  --name "Database integration" \
-  --description "Add database support for document indexing"
-
-# 5. Associate relevant skills
-clojure-skills plan skill add 1 "next_jdbc"
-clojure-skills plan skill add 1 "honeysql"
-clojure-skills plan skill add 1 "sqlite_jdbc"
-
-# 6. Create task list
+# Create task list
 clojure-skills plan task-list create 1 \
   --name "Implementation tasks"
 
-# 7. Add tasks
+# Add tasks
 clojure-skills task-list task create 1 \
   --description "Create database schema" \
   --order 1
 
-clojure-skills task-list task create 1 \
-  --description "Implement query functions" \
-  --order 2
-
-# 8. Work on tasks, marking completed
+# Mark task completed
 clojure-skills task complete 1
 
-# 9. Update plan status
+# Update plan status
 clojure-skills plan update 1 --status in-progress
 
-# 10. When done, complete plan
+# Complete plan
 clojure-skills plan complete 1
 
-# 11. Set result
+# Set result
 clojure-skills plan result set 1 \
-  --result "Database integration completed with full test coverage"
-```
-
-#### Integration with REPL Workflow
-
-```clojure
-;; In your REPL, you can shell out to clojure-skills
-(require '[clojure.java.shell :as shell])
-
-;; Search for skills
-(shell/sh "clojure-skills" "skill" "search" "testing")
-
-;; Or use programmatically if you add clojure-skills as a dependency
-(require '[clojure-skills.core :as skills])
-
-;; This assumes clojure-skills can be used as a library
-;; Check the actual API documentation for details
-```
-
-#### Configuration
-
-The tool looks for skills in these locations (in order):
-1. `.clojure-skills/` in current directory
-2. `~/.clojure-skills/` in user home
-3. System-wide installation location
-
-Database is stored at:
-- `.clojure-skills/clojure-skills.db` (project-local)
-- Or `~/.clojure-skills/clojure-skills.db` (user-global)
-
-#### Best Practices
-
-**DO:**
-- Run `db sync` after modifying skill files
-- Use descriptive plan names and descriptions
-- Associate all relevant skills with plans
-- Break plans into manageable task lists
-- Order tasks logically
-- Update plan status as work progresses
-- Document results when completing plans
-
-**DON'T:**
-- Use `db reset` without backing up data
-- Delete plans/tasks without `--force` flag (safety feature)
-- Forget to sync after adding new skills
-- Create overly granular tasks (keep them meaningful)
-- Leave plans in "in-progress" indefinitely
-
-#### Troubleshooting
-
-**Database not found:**
-```bash
-# Initialize database first
-clojure-skills db init
-```
-
-**No skills found after init:**
-```bash
-# Sync skills from filesystem
-clojure-skills db sync
-
-# Check stats to verify
-clojure-skills db stats
-```
-
-**Search returns no results:**
-```bash
-# Check database has content
-clojure-skills db stats
-
-# Try broader search terms
-clojure-skills skill search "test"
-
-# List all to verify skills exist
-clojure-skills skill list
-```
-
-**Plan operations fail:**
-```bash
-# Verify plan exists
-clojure-skills plan list
-
-# Check plan ID is correct
-clojure-skills plan show <id>
+  --result "Successfully implemented SQLite filter"
 ```
 
 ## Best Practices for Polydoc Development
 
 ### DO:
 
-1. **Read before writing**
+1. **Use REPL for everything**
+   - All code evaluation via nREPL (port 7889)
+   - Use clj-nrepl-eval for command-line evaluation
+   - Test incrementally as you develop
+
+2. **Read before writing**
    - Use `read` tool to examine files
    - Understand existing patterns
    - Check for similar implementations
 
-2. **Test incrementally**
+3. **Test incrementally**
    - Reload namespace after changes
    - Test happy path first
    - Then test edge cases (nil, empty, invalid)
 
-3. **Use appropriate tools**
-   - Static analysis with clojure-lsp
+4. **Use appropriate tools**
+   - Static analysis with clojure-lsp (via REPL)
    - Runtime testing with REPL
-   - Combine both for confidence
+   - clojure-skills for planning and skill discovery
 
-4. **Follow Clojure idioms**
+5. **Follow Clojure idioms**
    - Pure functions where possible
    - Data transformation over mutation
    - Clear naming conventions
 
-5. **Leverage existing libraries**
+6. **Leverage existing libraries**
    - HoneySQL for SQL generation
    - Malli for validation
    - cli-matic for CLI structure
-
-6. **Document as you go**
-   - Add docstrings to functions
-   - Update README.org for major changes
-   - Include examples in metadata
 
 7. **Use hashp for debugging**
    - Add `#p` liberally during development
@@ -726,37 +591,43 @@ clojure-skills plan show <id>
 
 ### DON'T:
 
-1. **Skip verification**
-   - Always test changes
+1. **Use disallowed command-line tools**
+   - NO `clojure`, `clj` commands
+   - NO `bb` (babashka) commands
+   - NO `lein` commands
+   - ONLY use: `clj-nrepl-eval` and `clojure-skills`
+
+2. **Skip verification**
+   - Always test changes via REPL
    - Check diagnostics
    - Run tests if they exist
 
-2. **Make large, unfocused changes**
+3. **Make large, unfocused changes**
    - One task at a time
    - Small, testable increments
    - Easy to verify and rollback
 
-3. **Ignore errors**
+4. **Ignore errors**
    - Fix diagnostics immediately
    - Handle edge cases
    - Provide helpful error messages
 
-4. **Forget to reload**
+5. **Forget to reload**
    - Always `:reload` after editing
    - Check that changes took effect
    - Re-run tests after reload
 
-5. **Hardcode values**
+6. **Hardcode values**
    - Use configuration
    - Environment variables for paths
    - Make code reusable
 
-6. **Assume without testing**
+7. **Assume without testing**
    - Verify behavior at REPL
    - Test edge cases explicitly
    - Don't rely on "it should work"
 
-7. **Commit debug statements**
+8. **Commit debug statements**
    - Remove `#p` statements before committing
    - Or use conditional enabling for development
 
@@ -767,9 +638,15 @@ clojure-skills plan show <id>
 **Cause:** Forgot to reload namespace
 
 ```clojure
-;; Solution
+;; Solution (via REPL or clj-nrepl-eval)
 (require 'polydoc.main :reload)
 (polydoc.main/new-function args)  ; Now works
+```
+
+```bash
+# Via clj-nrepl-eval
+clj-nrepl-eval -p 7889 "(require 'polydoc.main :reload)"
+clj-nrepl-eval -p 7889 "(polydoc.main/new-function args)"
 ```
 
 ### Issue: "Changes don't take effect"
@@ -779,8 +656,11 @@ clojure-skills plan show <id>
 ```clojure
 ;; Solution: Force complete reload
 (require 'polydoc.main :reload-all)
+```
 
-;; Verify with read tool that edit was saved
+```bash
+# Via clj-nrepl-eval
+clj-nrepl-eval -p 7889 "(require 'polydoc.main :reload-all)"
 ```
 
 ### Issue: "Tests fail after refactoring"
@@ -793,12 +673,18 @@ clojure-skills plan show <id>
 (clojure.test/run-tests 'polydoc.main-test)
 ```
 
+```bash
+# Via clj-nrepl-eval
+clj-nrepl-eval -p 7889 "(require 'polydoc.main-test :reload)"
+clj-nrepl-eval -p 7889 "(clojure.test/run-tests 'polydoc.main-test)"
+```
+
 ### Issue: "Can't find function/namespace"
 
 **Cause:** Exploring unfamiliar codebase
 
 ```clojure
-;; Solution: Use discovery tools
+;; Solution: Use discovery tools via REPL
 (map ns-name (all-ns))
 (apropos "filter")
 (find-doc "pandoc")
@@ -813,7 +699,7 @@ clojure-skills plan show <id>
 **Cause:** JSON structure is complex
 
 ```clojure
-;; Solution: Pretty-print and explore
+;; Solution: Pretty-print and explore via REPL
 (require '[puget.printer :as puget])
 (puget/cprint sample-ast)
 
@@ -840,86 +726,312 @@ clojure-skills plan show <id>
 ;; Shows value at each step with context
 ```
 
-## Development Workflow Commands
+## REPL Workflow Pattern
 
-### Starting Development
+All development should follow this pattern:
 
-```bash
-# Start nREPL server
-clojure -M:nrepl
+```
+1. GATHER (via REPL)
+   ├─ Explore namespaces: (all-ns), (dir ns)
+   ├─ Check diagnostics: (lsp-api/diagnostics ...)
+   ├─ Read documentation: (doc fn), (source fn)
+   └─ Search: (apropos "..."), (meta/search "...")
 
-# In another terminal, run tests
-clojure -M:test
+2. ACTION (edit files, then reload)
+   ├─ Edit files with read/edit/write tools
+   ├─ Reload: (require 'ns :reload)
+   ├─ Clean: (lsp-api/clean-ns! ...)
+   └─ Format: (lsp-api/format! ...)
 
-# Check for outdated dependencies
-clojure -M:outdated -e
+3. VERIFY (via REPL)
+   ├─ Test function: (my-fn test-data)
+   ├─ Test edge cases: (my-fn nil), (my-fn [])
+   ├─ Run tests: (clojure.test/run-tests 'ns-test)
+   └─ Check diagnostics: (lsp-api/diagnostics ...)
+
+4. REPEAT until satisfied
 ```
 
-### In the REPL
+**Using clj-nrepl-eval for the same pattern:**
+
+```bash
+# 1. GATHER
+clj-nrepl-eval -p 7889 "(all-ns)"
+clj-nrepl-eval -p 7889 "(dir polydoc.main)"
+clj-nrepl-eval -p 7889 "(doc polydoc.main/some-fn)"
+
+# 2. ACTION (after editing files)
+clj-nrepl-eval -p 7889 "(require 'polydoc.main :reload)"
+clj-nrepl-eval -p 7889 "(lsp-api/clean-ns! {:namespace '[polydoc.main]})"
+
+# 3. VERIFY
+clj-nrepl-eval -p 7889 "(polydoc.main/my-fn test-data)"
+clj-nrepl-eval -p 7889 "(polydoc.main/my-fn nil)"
+clj-nrepl-eval -p 7889 "(clojure.test/run-tests 'polydoc.main-test)"
+
+# 4. REPEAT
+```
+
+## Critical: Error Handling Protocol
+
+**⚠️ STOP AND ASK FOR USER HELP IMMEDIATELY when:**
+
+### 1. MCP Tool Failures
+
+If ANY MCP tool call fails:
+
+```bash
+# Example: Tool call fails
+# Error: Unable to execute bash command
+# Error: File read permission denied
+# Error: Edit operation failed
+```
+
+**Required Response:**
+1. **STOP all work immediately**
+2. **Show the user the complete error message**
+3. **Explain what you were trying to do**
+4. **Ask the user for guidance**
+
+**DO NOT:**
+- Try alternative approaches without user input
+- Skip the failed step
+- Continue as if nothing happened
+- Guess at solutions
+
+### 2. Clojure/JVM Exceptions
+
+If ANY Clojure exception or JVM error occurs via `clj-nrepl-eval`:
 
 ```clojure
-;; Start in user namespace
-user=> (dev)  ; Load dev namespace
-
-;; In dev namespace
-dev=> (refresh)   ; Reload all namespaces
-dev=> (lint)      ; Run clj-kondo
-dev=> (run-all)   ; Run all tests
-
-;; Install hashp for debugging
-((requiring-resolve 'hashp.install/install!))
+;; Example exceptions:
+;; - ClassNotFoundException
+;; - IllegalArgumentException
+;; - NullPointerException
+;; - ArithmeticException
+;; - ExceptionInfo
+;; - CompilerException
+;; - Any stacktrace output
 ```
 
-### Building & Testing
+**Required Response:**
+
+1. **STOP all work immediately**
+
+2. **Pretty-print the error using clojure.pprint/pretty**:
 
 ```bash
-# Run tests with Kaocha
-clojure -M:test
-
-# Lint with clj-kondo
-clojure -M:lint -m clj-kondo.main --lint src
-
-# Format code with cljstyle
-clojure -M:format -m cljstyle.main fix
-
-# Generate documentation
-clojure -X:codox
+clj-nrepl-eval -p 7889 <<'EOF'
+(require '[clojure.pprint :refer [pprint]])
+(try
+  ;; The failing code that produced the error
+  (your-failing-function args)
+  (catch Exception e
+    (pprint {:error-type (type e)
+             :message (.getMessage e)
+             :cause (.getCause e)
+             :data (ex-data e)
+             :stacktrace (take 10 (.getStackTrace e))})))
+EOF
 ```
 
-## LLM Agent Limitations
+3. **Show the user:**
+   - The pretty-printed error details
+   - The exact code that failed
+   - What you were trying to accomplish
+   - The context (which function, which namespace)
+
+4. **Ask the user:**
+   - "I encountered this error. How should I proceed?"
+   - Provide the full error context
+   - Wait for user guidance
+
+**DO NOT:**
+- Try to fix the error without understanding it
+- Continue with other tasks
+- Assume what the error means
+- Skip error handling
+
+### 3. nREPL Connection Issues
+
+If `clj-nrepl-eval` cannot connect or times out:
+
+```bash
+# Examples:
+# Connection refused
+# Read timeout
+# Server not responding
+```
+
+**Required Response:**
+1. **STOP immediately**
+2. **Show the connection error to user**
+3. **Ask: "The nREPL server seems unavailable. Should I wait, or would you like to restart it?"**
+4. **DO NOT proceed until connection is restored**
+
+### 4. Unexpected or Confusing Behavior
+
+If code produces unexpected results, even without explicit errors:
+
+```clojure
+;; Example: Function returns nil when you expected a value
+;; Example: Empty collection when you expected data
+;; Example: Wrong type returned
+```
+
+**Required Response:**
+1. **STOP and investigate**
+2. **Show the user what you expected vs what you got**
+3. **Ask: "This behavior is unexpected. Should we debug this together?"**
+4. **Wait for guidance before proceeding**
+
+## Error Handling Examples
+
+### Example 1: Handling a Clojure Exception
+
+**❌ WRONG (Don't do this):**
+```
+[Agent tries code, gets exception, tries different approach without telling user]
+```
+
+**✅ CORRECT (Do this):**
+```
+I attempted to reload the namespace and encountered an exception:
+
+clj-nrepl-eval -p 7889 <<'EOF'
+(require '[clojure.pprint :refer [pprint]])
+(try
+  (require 'polydoc.main :reload)
+  (catch Exception e
+    (pprint {:error-type (type e)
+             :message (.getMessage e)
+             :cause (.getCause e)
+             :data (ex-data e)
+             :stacktrace (take 10 (.getStackTrace e))})))
+EOF
+
+Error Output:
+{:error-type java.lang.RuntimeException
+ :message "Unable to resolve symbol: unknown-fn"
+ :cause nil
+ :data {:file "polydoc/main.clj" :line 42 :column 5}
+ :stacktrace [...]}
+
+The error indicates that polydoc/main.clj line 42 references 
+an undefined symbol 'unknown-fn'. 
+
+How would you like me to proceed? Should I:
+1. Show you the code around line 42?
+2. Search for where this symbol should be defined?
+3. Something else?
+```
+
+### Example 2: Handling MCP Tool Failure
+
+**❌ WRONG:**
+```
+[Agent gets "file not found" error, tries different file path without asking]
+```
+
+**✅ CORRECT:**
+```
+I tried to read the file src/polydoc/filter.clj but got this error:
+
+Error: File not found: src/polydoc/filter.clj
+
+I was trying to examine the existing filter implementation 
+to understand the pattern before implementing the new filter.
+
+Could you help me locate the correct file? Should I:
+1. List the files in src/polydoc/ to find the right one?
+2. Is the file named differently?
+3. Should I look somewhere else?
+```
+
+### Example 3: Handling Unexpected Behavior
+
+**❌ WRONG:**
+```
+[Function returns nil, agent assumes it's correct and continues]
+```
+
+**✅ CORRECT:**
+```
+I tested the function but got an unexpected result:
+
+clj-nrepl-eval -p 7889 "(polydoc.filters/process-code-block sample-block)"
+=> nil
+
+I expected this to return a transformed AST node, but it's 
+returning nil instead. This could indicate:
+1. The function isn't finding matching blocks
+2. There's an error being silently caught
+3. The sample data format is wrong
+
+Would you like me to:
+1. Add debug output to trace the execution?
+2. Check the input data format?
+3. Examine the function implementation more carefully?
+
+Please advise how to proceed.
+```
+
+## LLM Agent Limitations & Error Protocol
 
 As an LLM agent working on this project, remember:
 
-1. **You cannot debug complex issues alone**
-   - Ask the user for help with obscure errors
-   - Provide context: what you tried, what failed
-   - Show error messages clearly
+1. **You can only use specific command-line tools**
+   - `clj-nrepl-eval` for all Clojure code evaluation
+   - `clojure-skills` for skill/plan management
+   - NO other command-line tools (no `clojure`, `bb`, `lein`, etc.)
 
-2. **You need user input for decisions**
+2. **All development happens via REPL**
+   - Connect to nREPL on port 7889
+   - Use clj-nrepl-eval to interact from command line
+   - Test everything incrementally
+
+3. **CRITICAL: You MUST stop and ask for help when errors occur**
+   - **ANY MCP tool failure** → STOP, show error, ask user
+   - **ANY Clojure/JVM exception** → STOP, pretty-print with `clojure.pprint`, ask user
+   - **ANY nREPL connection issue** → STOP, report issue, ask user
+   - **ANY unexpected behavior** → STOP, explain discrepancy, ask user
+   - **NEVER continue past errors without explicit user guidance**
+
+4. **Pretty-print ALL Clojure errors**
+   - Use `clojure.pprint/pprint` to format error details
+   - Show error type, message, cause, data, and stacktrace
+   - Make errors readable and actionable for the user
+
+5. **You need user input for decisions**
    - Architecture choices
    - API design
    - Trade-offs between approaches
+   - **How to handle ANY error or unexpected behavior**
 
-3. **Test assumptions immediately**
+6. **Test assumptions immediately**
    - Don't assume code works
    - Verify at the REPL
-   - Run tests to confirm
+   - Use clj-nrepl-eval to test
+   - **Stop and ask if results are unexpected**
 
-4. **Communicate progress**
+7. **Communicate progress AND problems**
    - Explain what you're doing
    - Show verification steps
-   - Report errors clearly
+   - **Report errors IMMEDIATELY with full context**
+   - **Wait for user guidance before proceeding past any issue**
 
 ## Resources
 
 ### Relevant Clojure Skills
+
+Use clojure-skills to search for:
 
 - **Language**: `clojure_intro`, `clojure_repl`
 - **Data**: `data_json`, `clj_yaml`, `malli`, `lentes`
 - **Database**: `next_jdbc`, `honeysql`, `sqlite_jdbc`
 - **CLI**: `cli_matic`, `bling`
 - **Testing**: `kaocha`, `matcher_combinators`, `test_check`
-- **Tools**: `clojure_lsp_api`, `metazoa`, `hashp-debugging`, `clojure-skills`
+- **Tools**: `clojure_lsp_api`, `metazoa`, `hashp-debugging`
 
 ### External Documentation
 
@@ -934,25 +1046,29 @@ As an LLM agent working on this project, remember:
 
 When working on Polydoc:
 
-1. **Gather** - Read code, explore with REPL tools, use clojure-lsp for diagnostics, search skills with clojure-skills
-2. **Action** - Make focused changes with read/edit/write tools, track work with implementation plans
-3. **Verify** - Reload, test, check diagnostics, run tests, complete tasks
+1. **REPL-First Development**
+   - All code evaluation via nREPL (port 7889)
+   - Use clj-nrepl-eval from command line
+   - Only allowed CLI tools: clj-nrepl-eval, clojure-skills
 
-**Key principles:**
-- Read before writing
-- Test after editing  
-- Use static analysis (clojure-lsp) + runtime testing (REPL)
-- Use hashp (#p) for debugging during development
-- Use clojure-skills to find relevant skills and manage implementation plans
-- Communicate clearly
-- Fix errors immediately
-- Follow Clojure idioms
-- Leverage existing libraries
+2. **Gather-Action-Verify Loop**
+   - Gather: Explore via REPL tools
+   - Action: Edit files, reload namespaces
+   - Verify: Test via REPL, check diagnostics
 
-**Tool usage:**
-- `clojure-skills` - Search skills, manage plans, track tasks
-- `clojure-lsp` - Static analysis, refactoring, diagnostics
-- `hashp` - Debug printing during development
-- `metazoa` - Metadata exploration and documentation
+3. **Key Principles**
+   - Read before writing
+   - Test after editing
+   - Use REPL for everything
+   - Fix errors immediately
+   - Follow Clojure idioms
+   - Leverage existing libraries
 
-This ensures reliable code changes that work correctly in the Polydoc documentation processing system.
+4. **Tool Usage**
+   - `clj-nrepl-eval` - All Clojure evaluation
+   - `clojure-skills` - Skill search, plan management
+   - `read/edit/write` - File operations
+   - `clojure-lsp` API - Via REPL only
+   - `hashp` - Debug printing via REPL
+
+This ensures reliable, REPL-driven development that works correctly in the Polydoc documentation processing system.

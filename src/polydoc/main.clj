@@ -19,7 +19,9 @@
   For more information, see README.md and examples/"
   (:require [cli-matic.core :as cli]
             [polydoc.filters.clojure-exec :as clj-exec]
-            [polydoc.filters.sqlite-exec :as sqlite-exec])
+            [polydoc.filters.sqlite-exec :as sqlite-exec]
+            [polydoc.filters.plantuml :as plantuml]
+            [polydoc.filters.include :as include])
   (:gen-class))
 
 ;; Version information
@@ -33,10 +35,12 @@
     "clojure-exec" (clj-exec/main {:input input :output output})
     "sqlite-exec" (sqlite-exec/main {:input input :output output})
     "sqlite" (sqlite-exec/main {:input input :output output})
+    "plantuml" (plantuml/main {:input input :output output})
+    "include" (include/main {:input input :output output})
     ;; Default case
     (binding [*out* *err*]
       (println "ERROR: Unknown filter type:" type)
-      (println "Available filters: clojure-exec, sqlite-exec")
+      (println "Available filters: clojure-exec, sqlite-exec, plantuml, include")
       (System/exit 1))))
 
 (defn book-cmd
