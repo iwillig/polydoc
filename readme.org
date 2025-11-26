@@ -5,7 +5,7 @@
 Polydoc brings Pandoc's filtering capabilities to the JVM/Clojure ecosystem, providing:
 
 - Advanced Pandoc filters compiled with GraalVM for reduced latency
-- JVM-native documentation tooling (no Python/Node.js dependencies required)
+- JVM-native documentation tooling (no Python dependencies required, JavaScript via GraalJS)
 - Support for multiple document formats via Pandoc
 - SQLite-powered full-text search with FTS5
 - Book building system with automatic indexing
@@ -15,7 +15,7 @@ Polydoc brings Pandoc's filtering capabilities to the JVM/Clojure ecosystem, pro
 
 Documentation is a fundamental part of software engineering. There are many different tools for managing documentation, but polydoc offers several advantages:
 
-- *JVM-Native*: If you're working on the JVM, you don't need to bring Python, Node.js, or Go into your stack just for documentation.
+- *JVM-Native*: If you're working on the JVM, you don't need to bring Python or Go into your stack just for documentation. JavaScript execution uses GraalJS (included with GraalVM).
 - *Pandoc Integration*: Leverage Pandoc's powerful document transformation capabilities.
 - *Advanced Filters*: Execute code (Clojure, SQLite, JavaScript), render diagrams (PlantUML), and compose documents (include filter).
 - *Full-Text Search*: Built-in SQLite FTS5 search index automatically maintained.
@@ -29,7 +29,7 @@ Documentation is a fundamental part of software engineering. There are many diff
 
 - *clojure-exec*: Execute Clojure code blocks and show results
 - *sqlite-exec*: Run SQLite queries and format results as tables
-- *javascript-exec*: Execute JavaScript code blocks with Node.js
+- *javascript-exec*: Execute JavaScript code blocks with GraalJS (GraalVM's JavaScript engine)
 - *plantuml*: Render PlantUML diagrams to images
 - *include*: Compose documents from multiple source files
 
@@ -71,10 +71,9 @@ Documentation is a fundamental part of software engineering. There are many diff
 
 *** Prerequisites
 
-- Java 11 or later
+- GraalVM 21 or later (includes GraalJS for JavaScript filter)
 - Clojure CLI tools
 - Pandoc 2.0 or later
-- Node.js (for JavaScript filter)
 - PlantUML JAR (for PlantUML filter)
 
 *** Using Clojure CLI

@@ -102,12 +102,12 @@
   
   Uses headless mode when running in CI environment (CI=true env var)."
   [f]
-  (let [ci? (= "true" (System/getenv "CI"))]
-    (e/with-firefox (cond-> {:size [1920 1080]}
-                      ci? (assoc :headless true))
-                    driver
-      (binding [*driver* driver]
-        (f)))))
+  (e/with-firefox (if (= "true" (System/getenv "CI"))
+                    {:size [1920 1080] :headless true}
+                    {:size [1920 1080]})
+                  driver
+    (binding [*driver* driver]
+      (f))))
 
 
 (use-fixtures :once fixture-server)
