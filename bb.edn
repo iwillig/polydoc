@@ -87,6 +87,6 @@
   ci
   {:doc "Runs linting and tests for the CI"
    :task (do (run 'clean)
-             #_(run 'fmt-check)
-             #_(run 'lint)
+             (run 'fmt-check)
+             (run 'lint)
              (run 'test))}}}
