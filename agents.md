@@ -110,6 +110,37 @@ polydoc/
 
 When working on Polydoc, follow the **Gather-Action-Verify** loop pattern using **only the REPL** and allowed command-line tools.
 
+### Important: Use clj-reload for Namespace Reloading
+
+**Always use `clj-reload` instead of `:reload`** when reloading namespaces after making changes. This project uses [clj-reload](https://github.com/tonsky/clj-reload) for clean, efficient namespace reloading.
+
+```clojure
+;; Load clj-reload (already in dev dependencies)
+(require '[clj-reload.core :as reload])
+
+;; Reload all changed namespaces (default behavior)
+(reload/reload)
+;; => {:unloaded [ns1 ns2] :loaded [ns1 ns2]}
+
+;; Options:
+(reload/reload {:only :changed})  ; Default: only changed namespaces
+(reload/reload {:only :loaded})   ; Reload all loaded namespaces
+(reload/reload {:only :all})      ; Reload everything
+(reload/reload {:only #"polydoc.*"})  ; Pattern-based reload
+```
+
+**Why clj-reload over `:reload`?**
+- **Cleaner reloads**: Properly unloads old definitions before reloading
+- **Dependency tracking**: Reloads dependent namespaces automatically
+- **Better error handling**: Reports what was unloaded/loaded
+- **Efficient**: Only reloads what changed by default
+
+**Using with clj-nrepl-eval:**
+```bash
+clj-nrepl-eval -p 7889 "(require '[clj-reload.core :as reload])"
+clj-nrepl-eval -p 7889 "(reload/reload)"
+```
+
 ### 1. Gather Context
 
 **Before making any changes, explore via REPL:**
@@ -219,7 +250,14 @@ clj-nrepl-eval -p 7889 "(lsp-api/format! {:namespace '[polydoc.main]})"
 **Always verify changes via REPL:**
 
 ```clojure
-;; 1. Reload the namespace
+;; 1. Reload namespaces (IMPORTANT: Use clj-reload for clean reloads!)
+(require '[clj-reload.core :as reload])
+(reload/reload)  ; Reloads all changed namespaces cleanly
+
+;; clj-reload only reloads :changed namespaces by default (efficient!)
+;; Returns: {:unloaded [...] :loaded [...]}
+
+;; Alternative: Reload specific namespace (may have stale state)
 (require 'polydoc.main :reload)
 
 ;; 2. Test basic functionality
@@ -241,7 +279,17 @@ clj-nrepl-eval -p 7889 "(lsp-api/format! {:namespace '[polydoc.main]})"
 **Using clj-nrepl-eval for verification:**
 
 ```bash
-# Reload namespace
+# BEST: Use clj-reload for clean namespace reloading
+clj-nrepl-eval -p 7889 "(require '[clj-reload.core :as reload])"
+clj-nrepl-eval -p 7889 "(reload/reload)"
+
+# clj-reload options:
+# (reload/reload) - Default: only changed namespaces
+# (reload/reload {:only :loaded}) - Reload all loaded namespaces
+# (reload/reload {:only :all}) - Reload everything
+# (reload/reload {:only #"polydoc.*"}) - Reload namespaces matching pattern
+
+# Alternative: Reload specific namespace
 clj-nrepl-eval -p 7889 "(require 'polydoc.main :reload)"
 
 # Test the function

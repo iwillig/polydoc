@@ -44,10 +44,14 @@
     ```
   
   See examples/ directory for more usage examples."
-  (:require [polydoc.filters.core :as core]
-            [clojure.string :as str]
-            [clojure.java.io :as io])
-  (:import [java.util Base64]))
+  (:require
+    [clojure.java.io :as io]
+    [clojure.string :as str]
+    [polydoc.filters.core :as core])
+  (:import
+    (java.util
+      Base64)))
+
 
 (defn has-class?
   "Check if attributes contain a specific class."
@@ -55,11 +59,13 @@
   (let [[_id classes _kvs] attrs]
     (boolean (some #(= class-name %) classes))))
 
+
 (defn code-block-attrs
   "Extract attributes from a CodeBlock node."
   [node]
   (when (= "CodeBlock" (core/node-type node))
     (first (core/node-content node))))
+
 
 (defn code-block-code
   "Extract code string from a CodeBlock node."
@@ -67,11 +73,13 @@
   (when (= "CodeBlock" (core/node-type node))
     (second (core/node-content node))))
 
+
 (defn get-attr-value
   "Get value of a key-value attribute."
   [attrs key]
   (let [[_id _classes kvs] attrs]
     (some (fn [[k v]] (when (= k key) v)) kvs)))
+
 
 (defn format->plantuml-flag
   "Convert format name to PlantUML command-line flag."
@@ -105,15 +113,15 @@
                         .start)
             stdin (.getOutputStream process)
             stdout (.getInputStream process)]
-        
+
         ;; Write PlantUML code to stdin
         (with-open [writer (io/writer stdin)]
           (.write writer code))
-        
+
         ;; Read output
         (let [output-bytes (.readAllBytes stdout)
               exit-code (.waitFor process)]
-          
+
           (if (zero? exit-code)
             {:success true
              :output (if is-text?
@@ -124,22 +132,24 @@
             {:success false
              :error (str "PlantUML exited with code " exit-code)
              :format format-str})))
-      
+
       (catch Exception e
         {:success false
          :error (str "Failed to execute PlantUML: " (.getMessage e))
          :format format-str}))))
 
+
 (defn make-error-block
   "Create a CodeBlock showing the error."
   [code error]
   (core/make-node
-   "CodeBlock"
-   [["" ["plantuml-error"] []]
-    (str "ERROR rendering PlantUML:\n"
-         error
-         "\n\nOriginal code:\n"
-         code)]))
+    "CodeBlock"
+    [["" ["plantuml-error"] []]
+     (str "ERROR rendering PlantUML:\n"
+          error
+          "\n\nOriginal code:\n"
+          code)]))
+
 
 (defn make-image-node
   "Create a Pandoc Image node from rendered output."
@@ -147,10 +157,10 @@
   (if is-text?
     ;; For text output, use CodeBlock
     (core/make-node
-     "CodeBlock"
-     [["" ["plantuml-output"] []]
-      output])
-    
+      "CodeBlock"
+      [["" ["plantuml-output"] []]
+       output])
+
     ;; For binary output, use Image with data URI
     (let [mime-type (case (str/lower-case format)
                       "svg" "image/svg+xml"
@@ -160,12 +170,12 @@
                       "image/svg+xml")
           data-uri (str "data:" mime-type ";base64," output)]
       (core/make-node
-       "Para"
-       [(core/make-node
-         "Image"
-         [["" ["plantuml"] []]  ; attrs
-          []                     ; caption (empty)
-          [data-uri ""]])]))))   ; target (url, title)
+        "Para"
+        [(core/make-node
+           "Image"
+           [["" ["plantuml"] []]  ; attrs
+            []                     ; caption (empty)
+            [data-uri ""]])]))))   ; target (url, title)
 
 (defn transform-plantuml-block
   "Transform a PlantUML code block into an image.
@@ -179,19 +189,20 @@
       (let [code (code-block-code node)
             format (get-attr-value attrs "format")
             result (render-plantuml {:code code :format format})]
-        
+
         (if (:success result)
           (make-image-node (:output result)
-                          (:format result)
-                          (:is-text result)
-                          code)
+                           (:format result)
+                           (:is-text result)
+                           code)
           (make-error-block code (:error result))))
-      
+
       ;; Not a PlantUML block, return unchanged
       node)
-    
+
     ;; Not a CodeBlock, return unchanged
     node))
+
 
 (defn plantuml-filter
   "Main filter function for PlantUML rendering.
@@ -199,6 +210,7 @@
   Walks the AST and transforms PlantUML code blocks to images."
   [ast]
   (core/walk-ast transform-plantuml-block ast))
+
 
 (defn main
   "Main entry point for CLI usage."

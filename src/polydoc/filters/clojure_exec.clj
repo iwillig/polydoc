@@ -38,8 +38,10 @@
   - Shows original code for reference
   
   See examples/ directory for more usage examples."
-  (:require [polydoc.filters.core :as core]
-            [clojure.string :as str]))
+  (:require
+    [clojure.string :as str]
+    [polydoc.filters.core :as core]))
+
 
 (defn has-class?
   "Check if attributes contain a specific class."
@@ -47,17 +49,20 @@
   (let [[_id classes _kvs] attrs]
     (boolean (some #(= class-name %) classes))))
 
+
 (defn code-block-attrs
   "Extract attributes from a CodeBlock node."
   [node]
   (when (= "CodeBlock" (core/node-type node))
     (first (core/node-content node))))
 
+
 (defn code-block-code
   "Extract code string from a CodeBlock node."
   [node]
   (when (= "CodeBlock" (core/node-type node))
     (second (core/node-content node))))
+
 
 (defn execute-clojure
   "Execute Clojure code and capture output.
@@ -83,6 +88,7 @@
      :error (str err)
      :exception @exception}))
 
+
 (defn format-execution-result
   "Format execution result for display.
   
@@ -94,21 +100,23 @@
   (let [parts (cond-> []
                 (not (str/blank? output))
                 (conj (str "Output:\n" output))
-                
+
                 (not exception)
                 (conj (str "Result:\n" (pr-str result)))
-                
+
                 exception
                 (conj (str "ERROR: " (.getMessage exception)))
-                
+
                 (and exception (not (str/blank? error)))
                 (conj (str "Stderr:\n" error)))]
     (str/join "\n\n" parts)))
+
 
 (defn make-code-block
   "Create a CodeBlock node."
   [attrs code]
   (core/make-node "CodeBlock" [attrs code]))
+
 
 (defn transform-clojure-exec-block
   "Transform a clojure-exec CodeBlock by executing it.
@@ -124,11 +132,12 @@
           result (execute-clojure code)
           output (format-execution-result result)
           new-code (str ";; Original code:\n"
-                       code
-                       "\n\n;; Execution result:\n"
-                       output)]
+                        code
+                        "\n\n;; Execution result:\n"
+                        output)]
       (make-code-block attrs new-code))
     node))
+
 
 (defn clojure-exec-filter
   "Pandoc filter that executes Clojure code blocks.
@@ -137,6 +146,7 @@
   replacing the block with the execution result."
   [ast]
   (core/walk-ast transform-clojure-exec-block ast))
+
 
 (defn main
   "Main entry point for CLI usage."

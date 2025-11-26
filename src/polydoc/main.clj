@@ -17,15 +17,19 @@
     clojure -M:main filter -t clojure-exec -i input.json -o output.json
   
   For more information, see README.md and examples/"
-  (:require [cli-matic.core :as cli]
-            [polydoc.filters.clojure-exec :as clj-exec]
-            [polydoc.filters.sqlite-exec :as sqlite-exec]
-            [polydoc.filters.plantuml :as plantuml]
-            [polydoc.filters.include :as include])
-  (:gen-class))
+  (:gen-class)
+  (:require
+    [cli-matic.core :as cli]
+    [polydoc.filters.clojure-exec :as clj-exec]
+    [polydoc.filters.include :as include]
+    [polydoc.filters.javascript-exec :as js-exec]
+    [polydoc.filters.plantuml :as plantuml]
+    [polydoc.filters.sqlite-exec :as sqlite-exec]))
+
 
 ;; Version information
 (def version "0.1.0-SNAPSHOT")
+
 
 ;; Command handler functions
 (defn filter-cmd
@@ -37,11 +41,14 @@
     "sqlite" (sqlite-exec/main {:input input :output output})
     "plantuml" (plantuml/main {:input input :output output})
     "include" (include/main {:input input :output output})
+    "javascript-exec" (js-exec/main {:input input :output output})
+    "js-exec" (js-exec/main {:input input :output output})
     ;; Default case
     (binding [*out* *err*]
       (println "ERROR: Unknown filter type:" type)
-      (println "Available filters: clojure-exec, sqlite-exec, plantuml, include")
+      (println "Available filters: clojure-exec, sqlite-exec, plantuml, include, javascript-exec")
       (System/exit 1))))
+
 
 (defn book-cmd
   "Build a book from source files"
@@ -50,12 +57,14 @@
   (println "Config:" config)
   (println "Output:" output))
 
+
 (defn search-cmd
   "Search documentation"
   [{:keys [database query]}]
   (println "Search command")
   (println "Database:" database)
   (println "Query:" query))
+
 
 (defn view-cmd
   "Start interactive viewer"
@@ -64,23 +73,24 @@
   (println "Database:" database)
   (println "Port:" port))
 
+
 ;; CLI configuration
 (def CONFIGURATION
   {:app {:command "polydoc"
          :description "JVM-native Pandoc documentation system"
          :version version}
-   
+
    :global-opts [{:option "verbose"
                   :short "v"
                   :type :with-flag
                   :default false
                   :as "Enable verbose output"}]
-   
+
    :commands [{:command "filter"
                :description "Execute a Pandoc filter"
                :opts [{:option "type"
                        :short "t"
-                       :as "Filter type (clojure-exec, sqlite-exec, plantuml, clj-kondo, include)"
+                       :as "Filter type (clojure-exec, sqlite-exec, plantuml, javascript-exec, include)"
                        :type :string
                        :required true}
                       {:option "input"
@@ -94,7 +104,7 @@
                        :type :string
                        :default "-"}]
                :runs filter-cmd}
-              
+
               {:command "book"
                :description "Build a book from source files"
                :opts [{:option "config"
@@ -108,7 +118,7 @@
                        :type :string
                        :required true}]
                :runs book-cmd}
-              
+
               {:command "search"
                :description "Search documentation"
                :opts [{:option "database"
@@ -122,7 +132,7 @@
                        :type :string
                        :required true}]
                :runs search-cmd}
-              
+
               {:command "view"
                :description "Start interactive documentation viewer"
                :opts [{:option "database"
@@ -137,5 +147,7 @@
                        :default 8080}]
                :runs view-cmd}]})
 
-(defn -main [& args]
+
+(defn -main
+  [& args]
   (cli/run-cmd args CONFIGURATION))

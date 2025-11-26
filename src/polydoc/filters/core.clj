@@ -27,10 +27,12 @@
   See also:
   - polydoc.filters.clojure-exec for filter implementation examples
   - examples/ directory for complete filter examples"
-  (:require [clojure.data.json :as json]
-            [clojure.walk :as walk]
-            [clojure.java.io :as io]
-            [clojure.pprint]))
+  (:require
+    [clojure.data.json :as json]
+    [clojure.java.io :as io]
+    [clojure.pprint]
+    [clojure.walk :as walk]))
+
 
 ;; AST I/O Functions
 
@@ -51,6 +53,7 @@
                  :else input)]
     (json/read reader :key-fn keyword)))
 
+
 (defn write-ast
   "Write Pandoc JSON AST to output.
   
@@ -62,13 +65,16 @@
   
   The AST is written as JSON."
   [ast output]
-  (let [writer (cond
-                 (= output "-") *out*
-                 (string? output) (io/writer output)
-                 :else output)]
-    (json/write ast writer)
-    (when (= output "-")
-      (flush))))
+  (if (string? output)
+    ;; File path - use with-open to ensure writer is closed
+    (with-open [writer (io/writer output)]
+      (json/write ast writer))
+    ;; Stdout or provided writer - don't close
+    (let [writer (if (= output "-") *out* output)]
+      (json/write ast writer)
+      (when (= output "-")
+        (flush)))))
+
 
 ;; AST Walking Utilities
 
@@ -79,20 +85,24 @@
   [x]
   (and (map? x) (contains? x :t)))
 
+
 (defn node-type
   "Get the type of an AST node."
   [node]
   (:t node))
+
 
 (defn node-content
   "Get the content of an AST node."
   [node]
   (:c node))
 
+
 (defn make-node
   "Create an AST node with type and content."
   [type content]
   {:t type :c content})
+
 
 (defn walk-ast
   "Walk the AST and apply a function to each node.
@@ -105,11 +115,12 @@
   Uses postwalk so children are processed before parents."
   [f ast]
   (walk/postwalk
-   (fn [node]
-     (if (ast-node? node)
-       (f node)
-       node))
-   ast))
+    (fn [node]
+      (if (ast-node? node)
+        (f node)
+        node))
+    ast))
+
 
 (defn filter-nodes
   "Filter AST nodes by type.
@@ -118,12 +129,13 @@
   [ast type]
   (let [matches (atom [])]
     (walk-ast
-     (fn [node]
-       (when (= (node-type node) type)
-         (swap! matches conj node))
-       node)
-     ast)
+      (fn [node]
+        (when (= (node-type node) type)
+          (swap! matches conj node))
+        node)
+      ast)
     @matches))
+
 
 ;; Filter Composition
 
@@ -134,6 +146,7 @@
   [& filters]
   (fn [ast]
     (reduce (fn [acc f] (f acc)) ast filters)))
+
 
 ;; Error Handling
 
@@ -153,6 +166,7 @@
           (.printStackTrace e *err*))
         ast))))
 
+
 ;; Filter Execution
 
 (defn execute-filter
@@ -168,6 +182,7 @@
   (let [ast (read-ast input)
         filtered (filter-fn ast)]
     (write-ast filtered output)))
+
 
 ;; Utilities
 
