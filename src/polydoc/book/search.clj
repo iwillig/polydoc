@@ -40,18 +40,20 @@
                    highlight-end "</mark>"
                    snippet-tokens 20}}]
    (when (and query (not (str/blank? query)))
-     (let [;; Base FTS5 search query
-           search-sql (str "SELECT 
-                             fts.rowid as rowid,
-                             s.section_id,
-                             s.heading_text,
-                             s.heading_level,
-                             s.source_file,
-                             snippet(sections_fts, 1, ?, ?, '...', ?) as snippet,
-                             rank as rank
-                           FROM sections_fts fts
-                           JOIN sections s ON fts.rowid = s.id
-                           WHERE sections_fts MATCH ?")
+      (let [;; Base FTS5 search query
+            search-sql (str "SELECT 
+                              fts.rowid as rowid,
+                              s.section_id,
+                              s.heading_text,
+                              s.heading_level,
+                              s.source_file,
+                              b.book_id,
+                              snippet(sections_fts, 1, ?, ?, '...', ?) as snippet,
+                              rank as rank
+                            FROM sections_fts fts
+                            JOIN sections s ON fts.rowid = s.id
+                            JOIN books b ON s.book_id = b.id
+                            WHERE sections_fts MATCH ?")
            ;; Add book filter if specified
            sql-with-book (if book-id
                            (str search-sql " AND s.book_id = ?")

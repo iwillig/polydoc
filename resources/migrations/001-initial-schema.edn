@@ -1,0 +1,105 @@
+{:id "001-initial-schema"
+
+ :up
+ ["PRAGMA foreign_keys = ON"
+
+  "CREATE TABLE books (
+     id INTEGER PRIMARY KEY AUTOINCREMENT,
+     book_id TEXT UNIQUE NOT NULL,
+     title TEXT NOT NULL,
+     author TEXT,
+     description TEXT,
+     version TEXT,
+     lang TEXT DEFAULT 'en-US',
+     metadata_json TEXT,
+     output_path TEXT,
+     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+   )"
+
+  "CREATE INDEX idx_books_book_id ON books(book_id)"
+
+  "CREATE TABLE sections (
+     id INTEGER PRIMARY KEY AUTOINCREMENT,
+     book_id INTEGER NOT NULL,
+     section_id TEXT NOT NULL,
+     source_file TEXT NOT NULL,
+     heading_level INTEGER NOT NULL,
+     heading_text TEXT NOT NULL,
+     heading_slug TEXT NOT NULL,
+     content_markdown TEXT,
+     content_html TEXT,
+     content_plain TEXT,
+     section_order INTEGER NOT NULL,
+     parent_section_id TEXT,
+     content_hash TEXT NOT NULL,
+     metadata_json TEXT,
+     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+     FOREIGN KEY (book_id) REFERENCES books(id) ON DELETE CASCADE
+   )"
+
+  "CREATE INDEX idx_sections_book_id ON sections(book_id)"
+
+  "CREATE INDEX idx_sections_section_id ON sections(section_id)"
+
+  "CREATE INDEX idx_sections_source_file ON sections(source_file)"
+
+  "CREATE INDEX idx_sections_content_hash ON sections(content_hash)"
+
+  "CREATE INDEX idx_sections_order ON sections(book_id, section_order)"
+
+  "CREATE VIRTUAL TABLE sections_fts USING fts5(
+     section_id UNINDEXED,
+     heading_text,
+     content_plain,
+     source_file UNINDEXED
+   )"
+
+  "CREATE TRIGGER sections_ai AFTER INSERT ON sections BEGIN
+     INSERT INTO sections_fts(section_id, heading_text, content_plain, source_file)
+     VALUES (new.section_id, new.heading_text, new.content_plain, new.source_file);
+   END"
+
+  "CREATE TRIGGER sections_ad AFTER DELETE ON sections BEGIN
+     DELETE FROM sections_fts WHERE section_id = old.section_id;
+   END"
+
+  "CREATE TRIGGER sections_au AFTER UPDATE ON sections BEGIN
+     DELETE FROM sections_fts WHERE section_id = old.section_id;
+     INSERT INTO sections_fts(section_id, heading_text, content_plain, source_file)
+     VALUES (new.section_id, new.heading_text, new.content_plain, new.source_file);
+   END"
+
+  "CREATE TABLE book_files (
+     id INTEGER PRIMARY KEY AUTOINCREMENT,
+     book_id INTEGER NOT NULL,
+     file_path TEXT NOT NULL,
+     file_order INTEGER NOT NULL,
+     file_hash TEXT NOT NULL,
+     filters_json TEXT,
+     last_modified DATETIME,
+     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+     FOREIGN KEY (book_id) REFERENCES books(id) ON DELETE CASCADE,
+     UNIQUE(book_id, file_path)
+   )"
+
+  "CREATE INDEX idx_book_files_book_id ON book_files(book_id)"
+
+  "CREATE INDEX idx_book_files_hash ON book_files(file_hash)"]
+
+ :down
+ ["DROP TABLE IF EXISTS book_files"
+
+  "DROP TRIGGER IF EXISTS sections_au"
+
+  "DROP TRIGGER IF EXISTS sections_ad"
+
+  "DROP TRIGGER IF EXISTS sections_ai"
+
+  "DROP TABLE IF EXISTS sections_fts"
+
+  "DROP TABLE IF EXISTS sections"
+
+  "DROP TABLE IF EXISTS books"]}

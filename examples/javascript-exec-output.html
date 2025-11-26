@@ -1,0 +1,314 @@
+<h1 id="javascript-execution-filter-demo">JavaScript Execution Filter
+Demo</h1>
+<p>This document demonstrates the <code>javascript-exec</code> filter
+which executes JavaScript code blocks using GraalVM Polyglot.</p>
+<h2 id="basic-javascript-execution">Basic JavaScript Execution</h2>
+<p>Simple arithmetic:</p>
+<pre class="javascript-exec"><code>// Original code:
+1 + 2 + 3
+
+// Execution result:
+Result:
+6
+
+Warnings:
+* &#39;--log.file=&lt;path&gt;&#39; if the option is passed using a guest language launcher.
+* &#39;-Dpolyglot.log.file=&lt;path&gt;&#39; if the option is passed using the host Java launcher.
+* Configure logging using the polyglot embedding API.]
+Execution without runtime compilation will negatively impact the guest application performance.
+For more information see: https://www.graalvm.org/latest/reference-manual/embed-languages/#runtime-optimization-support.</code></pre>
+<h2 id="console-output">Console Output</h2>
+<p>Using console.log:</p>
+<pre class="javascript-exec"><code>// Original code:
+console.log(&#39;Hello from JavaScript!&#39;);
+console.log(&#39;The answer is:&#39;, 42);
+42
+
+// Execution result:
+Output:
+Hello from JavaScript!
+The answer is: 42
+
+
+Result:
+42
+
+Warnings:
+* &#39;--log.file=&lt;path&gt;&#39; if the option is passed using a guest language launcher.
+* &#39;-Dpolyglot.log.file=&lt;path&gt;&#39; if the option is passed using the host Java launcher.
+* Configure logging using the polyglot embedding API.]
+Execution without runtime compilation will negatively impact the guest application performance.
+For more information see: https://www.graalvm.org/latest/reference-manual/embed-languages/#runtime-optimization-support.</code></pre>
+<h2 id="es6-features">ES6 Features</h2>
+<h3 id="const-and-let">Const and Let</h3>
+<pre class="javascript-exec"><code>// Original code:
+const x = 10;
+let y = 20;
+console.log(&#39;x + y =&#39;, x + y);
+x + y
+
+// Execution result:
+Output:
+x + y = 30
+
+
+Result:
+30
+
+Warnings:
+* &#39;--log.file=&lt;path&gt;&#39; if the option is passed using a guest language launcher.
+* &#39;-Dpolyglot.log.file=&lt;path&gt;&#39; if the option is passed using the host Java launcher.
+* Configure logging using the polyglot embedding API.]
+Execution without runtime compilation will negatively impact the guest application performance.
+For more information see: https://www.graalvm.org/latest/reference-manual/embed-languages/#runtime-optimization-support.</code></pre>
+<h3 id="arrow-functions">Arrow Functions</h3>
+<pre class="javascript-exec"><code>// Original code:
+const add = (a, b) =&gt; a + b;
+const multiply = (a, b) =&gt; a * b;
+
+console.log(&#39;add(5, 3) =&#39;, add(5, 3));
+console.log(&#39;multiply(4, 6) =&#39;, multiply(4, 6));
+
+add(10, 20)
+
+// Execution result:
+Output:
+add(5, 3) = 8
+multiply(4, 6) = 24
+
+
+Result:
+30
+
+Warnings:
+* &#39;--log.file=&lt;path&gt;&#39; if the option is passed using a guest language launcher.
+* &#39;-Dpolyglot.log.file=&lt;path&gt;&#39; if the option is passed using the host Java launcher.
+* Configure logging using the polyglot embedding API.]
+Execution without runtime compilation will negatively impact the guest application performance.
+For more information see: https://www.graalvm.org/latest/reference-manual/embed-languages/#runtime-optimization-support.</code></pre>
+<h3 id="array-methods">Array Methods</h3>
+<pre class="javascript-exec"><code>// Original code:
+const numbers = [1, 2, 3, 4, 5];
+
+const sum = numbers.reduce((a, b) =&gt; a + b, 0);
+const doubled = numbers.map(x =&gt; x * 2);
+const evens = numbers.filter(x =&gt; x % 2 === 0);
+
+console.log(&#39;Numbers:&#39;, numbers);
+console.log(&#39;Sum:&#39;, sum);
+console.log(&#39;Doubled:&#39;, doubled);
+console.log(&#39;Evens:&#39;, evens);
+
+sum
+
+// Execution result:
+Output:
+Numbers: 1,2,3,4,5
+Sum: 15
+Doubled: 2,4,6,8,10
+Evens: 2,4
+
+
+Result:
+15
+
+Warnings:
+* &#39;--log.file=&lt;path&gt;&#39; if the option is passed using a guest language launcher.
+* &#39;-Dpolyglot.log.file=&lt;path&gt;&#39; if the option is passed using the host Java launcher.
+* Configure logging using the polyglot embedding API.]
+Execution without runtime compilation will negatively impact the guest application performance.
+For more information see: https://www.graalvm.org/latest/reference-manual/embed-languages/#runtime-optimization-support.</code></pre>
+<h2 id="objects-and-json">Objects and JSON</h2>
+<pre class="javascript-exec"><code>// Original code:
+const person = {
+  name: &#39;Alice&#39;,
+  age: 30,
+  city: &#39;San Francisco&#39;
+};
+
+console.log(&#39;Person:&#39;, JSON.stringify(person, null, 2));
+person.name
+
+// Execution result:
+Output:
+Person: {
+  &quot;name&quot;: &quot;Alice&quot;,
+  &quot;age&quot;: 30,
+  &quot;city&quot;: &quot;San Francisco&quot;
+}
+
+
+Result:
+Alice
+
+Warnings:
+* &#39;--log.file=&lt;path&gt;&#39; if the option is passed using a guest language launcher.
+* &#39;-Dpolyglot.log.file=&lt;path&gt;&#39; if the option is passed using the host Java launcher.
+* Configure logging using the polyglot embedding API.]
+Execution without runtime compilation will negatively impact the guest application performance.
+For more information see: https://www.graalvm.org/latest/reference-manual/embed-languages/#runtime-optimization-support.</code></pre>
+<h2 id="string-manipulation">String Manipulation</h2>
+<pre class="javascript-exec"><code>// Original code:
+const text = &#39;Hello World&#39;;
+const upper = text.toUpperCase();
+const lower = text.toLowerCase();
+const reversed = text.split(&#39;&#39;).reverse().join(&#39;&#39;);
+
+console.log(&#39;Original:&#39;, text);
+console.log(&#39;Upper:&#39;, upper);
+console.log(&#39;Lower:&#39;, lower);
+console.log(&#39;Reversed:&#39;, reversed);
+
+reversed
+
+// Execution result:
+Output:
+Original: Hello World
+Upper: HELLO WORLD
+Lower: hello world
+Reversed: dlroW olleH
+
+
+Result:
+dlroW olleH
+
+Warnings:
+* &#39;--log.file=&lt;path&gt;&#39; if the option is passed using a guest language launcher.
+* &#39;-Dpolyglot.log.file=&lt;path&gt;&#39; if the option is passed using the host Java launcher.
+* Configure logging using the polyglot embedding API.]
+Execution without runtime compilation will negatively impact the guest application performance.
+For more information see: https://www.graalvm.org/latest/reference-manual/embed-languages/#runtime-optimization-support.</code></pre>
+<h2 id="fibonacci-sequence">Fibonacci Sequence</h2>
+<pre class="javascript-exec"><code>// Original code:
+function fibonacci(n) {
+  if (n &lt;= 1) return n;
+  return fibonacci(n - 1) + fibonacci(n - 2);
+}
+
+const fibs = [];
+for (let i = 0; i &lt; 10; i++) {
+  fibs.push(fibonacci(i));
+}
+
+console.log(&#39;First 10 Fibonacci numbers:&#39;, fibs);
+fibs
+
+// Execution result:
+Output:
+First 10 Fibonacci numbers: 0,1,1,2,3,5,8,13,21,34
+
+
+Result:
+(10)[0, 1, 1, 2, 3, 5, 8, 13, 21, 34]
+
+Warnings:
+* &#39;--log.file=&lt;path&gt;&#39; if the option is passed using a guest language launcher.
+* &#39;-Dpolyglot.log.file=&lt;path&gt;&#39; if the option is passed using the host Java launcher.
+* Configure logging using the polyglot embedding API.]
+Execution without runtime compilation will negatively impact the guest application performance.
+For more information see: https://www.graalvm.org/latest/reference-manual/embed-languages/#runtime-optimization-support.</code></pre>
+<h2 id="using-js-exec-alias">Using js-exec Alias</h2>
+<p>The filter also works with the <code>js-exec</code> class:</p>
+<pre class="js-exec"><code>// Original code:
+const greeting = &#39;Hello&#39;;
+const name = &#39;World&#39;;
+console.log(greeting + &#39;, &#39; + name + &#39;!&#39;);
+greeting + &#39;, &#39; + name
+
+// Execution result:
+Output:
+Hello, World!
+
+
+Result:
+Hello, World
+
+Warnings:
+* &#39;--log.file=&lt;path&gt;&#39; if the option is passed using a guest language launcher.
+* &#39;-Dpolyglot.log.file=&lt;path&gt;&#39; if the option is passed using the host Java launcher.
+* Configure logging using the polyglot embedding API.]
+Execution without runtime compilation will negatively impact the guest application performance.
+For more information see: https://www.graalvm.org/latest/reference-manual/embed-languages/#runtime-optimization-support.</code></pre>
+<h2 id="error-handling">Error Handling</h2>
+<p>The filter gracefully handles errors:</p>
+<pre class="javascript-exec"><code>// Original code:
+// This will produce an error
+throw new Error(&#39;This is a test error&#39;);
+
+// Execution result:
+ERROR: Error: This is a test error</code></pre>
+<h2 id="complex-example-data-processing">Complex Example: Data
+Processing</h2>
+<pre class="javascript-exec"><code>// Original code:
+// Sample data
+const data = [
+  { name: &#39;Alice&#39;, age: 30, salary: 80000 },
+  { name: &#39;Bob&#39;, age: 25, salary: 60000 },
+  { name: &#39;Charlie&#39;, age: 35, salary: 95000 },
+  { name: &#39;Diana&#39;, age: 28, salary: 70000 }
+];
+
+// Calculate average salary
+const avgSalary = data.reduce((sum, p) =&gt; sum + p.salary, 0) / data.length;
+
+// Find highest earner
+const highestEarner = data.reduce((max, p) =&gt; 
+  p.salary &gt; max.salary ? p : max
+);
+
+// Filter people over 30
+const over30 = data.filter(p =&gt; p.age &gt; 30);
+
+console.log(&#39;Average salary:&#39;, avgSalary);
+console.log(&#39;Highest earner:&#39;, highestEarner.name, &#39;-&#39;, highestEarner.salary);
+console.log(&#39;People over 30:&#39;, over30.map(p =&gt; p.name));
+
+avgSalary
+
+// Execution result:
+Output:
+Average salary: 76250
+Highest earner: Charlie - 95000
+People over 30: Charlie
+
+
+Result:
+76250
+
+Warnings:
+* &#39;--log.file=&lt;path&gt;&#39; if the option is passed using a guest language launcher.
+* &#39;-Dpolyglot.log.file=&lt;path&gt;&#39; if the option is passed using the host Java launcher.
+* Configure logging using the polyglot embedding API.]
+Execution without runtime compilation will negatively impact the guest application performance.
+For more information see: https://www.graalvm.org/latest/reference-manual/embed-languages/#runtime-optimization-support.</code></pre>
+<h2 id="usage">Usage</h2>
+<p>To process this document:</p>
+<div class="sourceCode" id="cb12"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Using Pandoc pipeline</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="ex">pandoc</span> javascript-exec-demo.md <span class="at">-t</span> json <span class="kw">|</span> <span class="ex">\\</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>  <span class="ex">clojure</span> <span class="at">-M:main</span> filter <span class="at">-t</span> javascript-exec <span class="kw">|</span> <span class="ex">\\</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>  <span class="ex">pandoc</span> <span class="at">-f</span> json <span class="at">-o</span> output.html</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Or directly</span></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a><span class="ex">clojure</span> <span class="at">-M:main</span> filter <span class="at">-t</span> javascript-exec <span class="dt">\\</span></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>  <span class="ex">-i</span> javascript-exec-demo.json <span class="dt">\\</span></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>  <span class="ex">-o</span> output.json</span></code></pre></div>
+<h2 id="supported-features">Supported Features</h2>
+<ul>
+<li>✅ ES6+ syntax (const, let, arrow functions)</li>
+<li>✅ Array methods (map, filter, reduce)</li>
+<li>✅ Object literals and JSON</li>
+<li>✅ Console.log output capture</li>
+<li>✅ Error handling</li>
+<li>✅ Both <code>javascript-exec</code> and <code>js-exec</code>
+classes</li>
+<li>✅ Sandboxed execution (no host access)</li>
+</ul>
+<h2 id="not-supported">Not Supported</h2>
+<ul>
+<li>❌ Node.js modules (fs, http, etc.)</li>
+<li>❌ npm packages</li>
+<li>❌ Asynchronous operations (Promises, async/await)</li>
+<li>❌ DOM manipulation</li>
+<li>❌ Browser APIs</li>
+</ul>

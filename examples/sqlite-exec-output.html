@@ -1,0 +1,255 @@
+<h1 id="sqlite-execution-filter-examples">SQLite Execution Filter
+Examples</h1>
+<p>This demonstrates the <code>sqlite-exec</code> filter for executing
+SQL queries in documentation.</p>
+<h2 id="simple-query">Simple Query</h2>
+<table>
+<thead>
+<tr>
+<th>:number</th>
+<th>:greeting</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Hello</td>
+</tr>
+</tbody>
+</table>
+<h2 id="multiple-rows">Multiple Rows</h2>
+<pre class="sqlite-exec"><code>;; SQL Query:
+SELECT *
+FROM (VALUES
+  (1, &#39;Alice&#39;, 30),
+  (2, &#39;Bob&#39;, 25),
+  (3, &#39;Charlie&#39;, 35)
+) AS users(id, name, age)
+ORDER BY age DESC;
+
+;; ERROR:
+[SQLITE_ERROR] SQL error or missing database (near &quot;(&quot;: syntax error)</code></pre>
+<h2 id="aggregation-query">Aggregation Query</h2>
+<pre class="sqlite-exec"><code>;; SQL Query:
+WITH sales AS (
+  SELECT * FROM (VALUES
+    (&#39;Electronics&#39;, 1000),
+    (&#39;Books&#39;, 500),
+    (&#39;Electronics&#39;, 1500),
+    (&#39;Books&#39;, 800),
+    (&#39;Clothing&#39;, 600)
+  ) AS t(category, amount)
+)
+SELECT 
+  category,
+  COUNT(*) as count,
+  SUM(amount) as total,
+  AVG(amount) as average
+FROM sales
+GROUP BY category
+ORDER BY total DESC;
+
+;; ERROR:
+[SQLITE_ERROR] SQL error or missing database (near &quot;(&quot;: syntax error)</code></pre>
+<h2 id="text-format-output">Text Format Output</h2>
+<p>Use <code>format="text"</code> to get plain text instead of a
+table:</p>
+<pre class="sqlite-exec" data-format="text"><code>;; SQL Query:
+SELECT &#39;Plain&#39; as format, &#39;Text&#39; as output, &#39;Result&#39; as type;
+
+;; Results:
+:format | :output | :type 
+--------+---------+-------
+Plain   | Text    | Result</code></pre>
+<h2 id="database-file">Database File</h2>
+<p>You can query an external SQLite database:</p>
+<pre class="sqlite-exec" data-db="mydata.db"><code>;; SQL Query:
+SELECT * FROM users LIMIT 10;
+
+;; ERROR:
+[SQLITE_ERROR] SQL error or missing database (no such table: users)</code></pre>
+<h2 id="date-and-time-functions">Date and Time Functions</h2>
+<table>
+<thead>
+<tr>
+<th>:today</th>
+<th>:current_time</th>
+<th>:local_datetime</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2025-11-26</td>
+<td>10:48:58</td>
+<td>2025-11-26 05:48:58</td>
+</tr>
+</tbody>
+</table>
+<h2 id="json-functions-sqlite-3.38">JSON Functions (SQLite 3.38+)</h2>
+<table>
+<thead>
+<tr>
+<th>:name</th>
+<th>:age</th>
+<th>:city</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Alice</td>
+<td>30</td>
+<td>NYC</td>
+</tr>
+</tbody>
+</table>
+<h2 id="string-functions">String Functions</h2>
+<table>
+<thead>
+<tr>
+<th>:uppercase</th>
+<th>:lowercase</th>
+<th>:string_length</th>
+<th>:substring</th>
+<th>:replaced</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>HELLO WORLD</td>
+<td>hello world</td>
+<td>7</td>
+<td>doc</td>
+<td>SQLite is awesome</td>
+</tr>
+</tbody>
+</table>
+<h2 id="math-functions">Math Functions</h2>
+<table>
+<thead>
+<tr>
+<th>:pi_rounded</th>
+<th>:absolute</th>
+<th>:power_of_two</th>
+<th>:square_root</th>
+<th>:random_number</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>3.14</td>
+<td>42</td>
+<td>1024.0</td>
+<td>12.0</td>
+<td>87</td>
+</tr>
+</tbody>
+</table>
+<h2 id="window-functions">Window Functions</h2>
+<pre class="sqlite-exec"><code>;; SQL Query:
+WITH scores AS (
+  SELECT * FROM (VALUES
+    (&#39;Alice&#39;, 95),
+    (&#39;Bob&#39;, 87),
+    (&#39;Charlie&#39;, 92),
+    (&#39;David&#39;, 88),
+    (&#39;Eve&#39;, 90)
+  ) AS t(name, score)
+)
+SELECT 
+  name,
+  score,
+  rank() OVER (ORDER BY score DESC) as rank,
+  row_number() OVER (ORDER BY score DESC) as row_num
+FROM scores;
+
+;; ERROR:
+[SQLITE_ERROR] SQL error or missing database (near &quot;(&quot;: syntax error)</code></pre>
+<h2 id="common-table-expressions-ctes">Common Table Expressions
+(CTEs)</h2>
+<table>
+<thead>
+<tr>
+<th>:x</th>
+<th>:square</th>
+<th>:cube</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+</tr>
+<tr>
+<td>2</td>
+<td>4</td>
+<td>8</td>
+</tr>
+<tr>
+<td>3</td>
+<td>9</td>
+<td>27</td>
+</tr>
+<tr>
+<td>4</td>
+<td>16</td>
+<td>64</td>
+</tr>
+<tr>
+<td>5</td>
+<td>25</td>
+<td>125</td>
+</tr>
+<tr>
+<td>6</td>
+<td>36</td>
+<td>216</td>
+</tr>
+<tr>
+<td>7</td>
+<td>49</td>
+<td>343</td>
+</tr>
+<tr>
+<td>8</td>
+<td>64</td>
+<td>512</td>
+</tr>
+<tr>
+<td>9</td>
+<td>81</td>
+<td>729</td>
+</tr>
+<tr>
+<td>10</td>
+<td>100</td>
+<td>1000</td>
+</tr>
+</tbody>
+</table>
+<h2 id="error-handling">Error Handling</h2>
+<p>Invalid SQL will show an error message:</p>
+<pre class="sqlite-exec"><code>;; SQL Query:
+THIS IS NOT VALID SQL;
+
+;; ERROR:
+[SQLITE_ERROR] SQL error or missing database (near &quot;THIS&quot;: syntax error)</code></pre>
+<h2 id="usage-with-pandoc">Usage with Pandoc</h2>
+<p>Process this document:</p>
+<div class="sourceCode" id="cb7"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Convert to HTML with SQL queries executed</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="ex">pandoc</span> sqlite-exec-demo.md <span class="at">-t</span> json <span class="kw">|</span> <span class="dt">\</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  <span class="ex">clojure</span> <span class="at">-M:main</span> filter <span class="at">-t</span> sqlite-exec <span class="kw">|</span> <span class="dt">\</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>  <span class="ex">pandoc</span> <span class="at">-f</span> json <span class="at">-o</span> output.html</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Or directly</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a><span class="ex">clojure</span> <span class="at">-M:main</span> filter <span class="at">-t</span> sqlite-exec <span class="dt">\</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">-i</span> sqlite-exec-demo.json <span class="dt">\</span></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">-o</span> output.json</span></code></pre></div>
+<h2 id="integration-example">Integration Example</h2>
+<p>Combine with other filters:</p>
+<div class="sourceCode" id="cb8"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="ex">pandoc</span> document.md <span class="at">-t</span> json <span class="kw">|</span> <span class="dt">\</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="ex">clojure</span> <span class="at">-M:main</span> filter <span class="at">-t</span> clojure-exec <span class="kw">|</span> <span class="dt">\</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="ex">clojure</span> <span class="at">-M:main</span> filter <span class="at">-t</span> sqlite-exec <span class="kw">|</span> <span class="dt">\</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>  <span class="ex">pandoc</span> <span class="at">-f</span> json <span class="at">-o</span> output.html</span></code></pre></div>

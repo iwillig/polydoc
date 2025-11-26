@@ -1,0 +1,64 @@
+<h1 id="clojure-execution-demo">Clojure Execution Demo</h1>
+<p>This document demonstrates the <code>clojure-exec</code> filter for
+Polydoc.</p>
+<h2 id="simple-arithmetic">Simple Arithmetic</h2>
+<p>Calculate the sum of numbers 1 through 10:</p>
+<pre class="clojure-exec"><code>;; Original code:
+(reduce + (range 1 11))
+
+;; Execution result:
+Result:
+55</code></pre>
+<h2 id="string-manipulation">String Manipulation</h2>
+<p>Convert text to uppercase:</p>
+<pre class="clojure-exec"><code>;; Original code:
+(clojure.string/upper-case &quot;hello world&quot;)
+
+;; Execution result:
+Result:
+&quot;HELLO WORLD&quot;</code></pre>
+<h2 id="data-structures">Data Structures</h2>
+<p>Create and manipulate a map:</p>
+<pre class="clojure-exec"><code>;; Original code:
+(assoc {:name &quot;Alice&quot; :age 30} :role :admin)
+
+;; Execution result:
+Result:
+{:name &quot;Alice&quot;, :age 30, :role :admin}</code></pre>
+<h2 id="multi-line-code">Multi-line Code</h2>
+<p>More complex calculations:</p>
+<pre class="clojure-exec"><code>;; Original code:
+(let [numbers [1 2 3 4 5]
+      doubled (map #(* 2 %) numbers)
+      sum (reduce + doubled)]
+  sum)
+
+;; Execution result:
+Result:
+30</code></pre>
+<h2 id="code-with-output">Code with Output</h2>
+<p>Print and return:</p>
+<pre class="clojure-exec"><code>;; Original code:
+(do
+  (println &quot;Processing...&quot;)
+  (println &quot;Done!&quot;)
+  42)
+
+;; Execution result:
+Output:
+Processing...
+Done!
+
+
+Result:
+42</code></pre>
+<h2 id="regular-clojure-code-not-executed">Regular Clojure Code (Not
+Executed)</h2>
+<p>This block has no <code>.clojure-exec</code> class, so it won’t be
+executed:</p>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode clojure"><code class="sourceCode clojure"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co">;; This is just for display</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>(<span class="bu">def</span><span class="fu"> my-function</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;A sample function&quot;</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  [x]</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>  (<span class="kw">*</span> x x))</span></code></pre></div>

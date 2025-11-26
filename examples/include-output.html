@@ -1,0 +1,130 @@
+<h1 id="include-filter-demo">Include Filter Demo</h1>
+<p>The Include filter allows you to include external files in your
+Markdown documents, supporting multiple modes for different use
+cases.</p>
+<h2 id="basic-file-inclusion-parse-mode">Basic File Inclusion (Parse
+Mode)</h2>
+<p>Include another Markdown file and parse it as Markdown (default):</p>
+<section id="simple-include" class="included"
+data-source="/Users/ivan.willig/dev/polydoc/test/fixtures/include/simple.md">
+<h1>Simple Include</h1>
+<p>This is a simple included file.</p>
+</section>
+<p>The content above will be parsed as Markdown and included inline.</p>
+<h2 id="include-as-code-block">Include as Code Block</h2>
+<p>Include a source file and display it with syntax highlighting:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode clojure"><code class="sourceCode clojure"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>(<span class="bu">defn</span><span class="fu"> hello </span>[<span class="kw">name</span>]</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  (<span class="kw">str</span> <span class="st">&quot;Hello, &quot;</span> <span class="kw">name</span> <span class="st">&quot;!&quot;</span>))</span></code></pre></div>
+<h2 id="include-as-raw-markdown">Include as Raw Markdown</h2>
+<p>Include content as raw Markdown without parsing:</p>
+<p>This is useful when you want to include Markdown that shouldn’t be
+processed.</p>
+<h2 id="relative-paths-with-base-directory">Relative Paths with Base
+Directory</h2>
+<p>You can specify a base directory for resolving relative paths:</p>
+<div class="included"
+data-source="/Users/ivan.willig/dev/polydoc/test/fixtures/include/code.clj">
+<p>(defn hello [name] (str “Hello,” name “!”))</p>
+</div>
+<h2 id="include-modes">Include Modes</h2>
+<h3 id="parse-mode-default">Parse Mode (default)</h3>
+<p>Parses the included file as Markdown and inserts the resulting AST
+nodes.</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode markdown"><code class="sourceCode markdown"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="in">```{.include}</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="in">path/to/document.md</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="in">\```</span></span></code></pre></div>
+<p><strong>Use when:</strong> Including Markdown content that should be
+processed normally.</p>
+<h3 id="code-mode">Code Mode</h3>
+<p>Includes the file as a syntax-highlighted code block.</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode markdown"><code class="sourceCode markdown"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="in">```{.include mode=code lang=clojure}</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="in">src/example.clj</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="in">\```</span></span></code></pre></div>
+<p><strong>Use when:</strong> Showing source code examples from actual
+files.</p>
+<h3 id="raw-mode">Raw Mode</h3>
+<p>Includes the file as a RawBlock without any parsing.</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode markdown"><code class="sourceCode markdown"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="in">```{.include mode=raw}</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="in">template.html</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="in">\```</span></span></code></pre></div>
+<p><strong>Use when:</strong> Including content that shouldn’t be
+processed (HTML, templates, etc.).</p>
+<h2 id="advanced-features">Advanced Features</h2>
+<h3 id="cycle-detection">Cycle Detection</h3>
+<p>The filter automatically detects include cycles to prevent infinite
+loops:</p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode markdown"><code class="sourceCode markdown"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co">&lt;!-- In file-a.md --&gt;</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="in">```{.include}</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="in">file-b.md</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="in">\```</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="in">&lt;!-- In file-b.md --&gt;</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="in">```{.include}</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="in">file-a.md</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="in">\```</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a><span class="in">&lt;!-- This will result in an error block showing the cycle --&gt;</span></span></code></pre></div>
+<h3 id="maximum-depth">Maximum Depth</h3>
+<p>Includes are limited to 10 levels deep by default to prevent
+excessive nesting.</p>
+<h3 id="path-resolution">Path Resolution</h3>
+<ul>
+<li>Relative paths are resolved relative to the current working
+directory</li>
+<li>Use the <code>base</code> attribute to set a different base
+directory</li>
+<li>Absolute paths are used as-is</li>
+<li>Paths are normalized (removing <code>.</code> and <code>..</code>
+components)</li>
+</ul>
+<h2 id="error-handling">Error Handling</h2>
+<p>When a file cannot be included (missing file, permission error,
+etc.), an error block is shown:</p>
+<pre class="include-error"><code>ERROR including file: nonexistent-file.md
+File not found: /Users/ivan.willig/dev/polydoc/nonexistent-file.md</code></pre>
+<p>This will show:</p>
+<pre><code>ERROR including file: nonexistent-file.md
+File not found: /absolute/path/to/nonexistent-file.md</code></pre>
+<h2 id="usage">Usage</h2>
+<p>Transform this document:</p>
+<div class="sourceCode" id="cb8"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Convert to JSON AST, apply filter, then to HTML</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="ex">pandoc</span> include-demo.md <span class="at">-t</span> json <span class="kw">|</span> <span class="dt">\</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="ex">clojure</span> <span class="at">-M:main</span> filter <span class="at">-t</span> include <span class="kw">|</span> <span class="dt">\</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>  <span class="ex">pandoc</span> <span class="at">-f</span> json <span class="at">-o</span> output.html</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Or directly</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="ex">clojure</span> <span class="at">-M:main</span> filter <span class="at">-t</span> include <span class="at">-i</span> include-demo.md <span class="at">-o</span> output.html</span></code></pre></div>
+<h2 id="combining-with-other-filters">Combining with Other Filters</h2>
+<p>Include filter works well with other filters:</p>
+<div class="sourceCode" id="cb9"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># First include external files, then execute Clojure code blocks</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="ex">pandoc</span> doc.md <span class="at">-t</span> json <span class="kw">|</span> <span class="dt">\</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  <span class="ex">clojure</span> <span class="at">-M:main</span> filter <span class="at">-t</span> include <span class="kw">|</span> <span class="dt">\</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>  <span class="ex">clojure</span> <span class="at">-M:main</span> filter <span class="at">-t</span> clojure-exec <span class="kw">|</span> <span class="dt">\</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>  <span class="ex">pandoc</span> <span class="at">-f</span> json <span class="at">-o</span> output.html</span></code></pre></div>
+<h2 id="use-cases">Use Cases</h2>
+<ol type="1">
+<li><strong>Modular Documentation</strong>: Break large documents into
+smaller, reusable files</li>
+<li><strong>Code Examples</strong>: Include actual source code that’s
+maintained separately</li>
+<li><strong>Shared Content</strong>: Reuse content across multiple
+documents</li>
+<li><strong>Templates</strong>: Include common headers, footers, or
+boilerplate</li>
+<li><strong>Book Building</strong>: Assemble chapters from individual
+files</li>
+</ol>
+<h2 id="notes">Notes</h2>
+<ul>
+<li>Requires Pandoc to be installed for parse mode</li>
+<li>File paths are resolved at filter execution time</li>
+<li>Included content is processed in the same Pandoc pipeline</li>
+<li>Parse mode supports nested includes (up to max depth)</li>
+</ul>

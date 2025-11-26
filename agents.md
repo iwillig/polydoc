@@ -29,8 +29,48 @@ As an LLM agent, you are restricted to using **only** these command-line tools:
 
 1. **clj-nrepl-eval** - For evaluating Clojure code via nREPL
 2. **clojure-skills** - For searching skills, managing plans, and tracking tasks
+3. **clj-paren-repair** - For automatically fixing delimiter errors in Clojure files
 
 All other interactions must happen through the **REPL** using the connected nREPL server (port 7889).
+
+### clj-paren-repair Tool
+
+The `clj-paren-repair` tool automatically detects and fixes delimiter (parentheses, brackets, braces) errors in Clojure files. It's particularly useful after making edits that may have introduced unbalanced delimiters.
+
+**Usage:**
+```bash
+# Fix delimiter errors in a single file
+clj-paren-repair path/to/file.clj
+
+# Fix multiple files at once
+clj-paren-repair file1.clj file2.clj file3.clj
+
+# Fix all Clojure files in a directory
+clj-paren-repair src/**/*.clj
+```
+
+**When to use:**
+- After making edits that result in "EOF while reading" errors
+- When encountering "Unmatched delimiter" compiler errors
+- As a quick fix for parenthesis-related syntax errors
+- Before committing changes to ensure proper formatting
+
+**Example:**
+```bash
+$ clj-paren-repair src/polydoc/viewer/server.clj
+Reformatted src/polydoc/viewer/server.clj
+
+clj-paren-repair Results
+========================
+
+  src/polydoc/viewer/server.clj: Delimiter errors fixed and formatted [delimiter-fixed, formatted]
+
+Summary:
+  Success: 1
+  Failed:  0
+```
+
+**Note:** The tool uses parinfer-rust (if available) or parinferish as a fallback to intelligently repair delimiters based on indentation and context.
 
 ## Fish Shell Usage
 

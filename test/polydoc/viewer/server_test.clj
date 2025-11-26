@@ -2,123 +2,105 @@
   "Integration tests for HTTP viewer using Etaoin browser automation."
   (:require
     [clojure.test :refer [deftest is testing use-fixtures]]
+    [com.stuartsierra.component :as component]
     [etaoin.api :as e]
     [polydoc.viewer.server :as server]
     [polydoc.db.schema :as schema]
+    [polydoc.test-helpers :as helpers]
     [next.jdbc :as jdbc]
     [honey.sql :as sql]))
 
 
 ;; Test Configuration
 
-(def test-db-path "target/test-viewer.db")
 (def test-port 3333)
 (def test-url (str "http://localhost:" test-port))
 
 
-;; Test Data Setup
-
-(defn create-test-database
-  "Create a test database with sample data."
-  []
-  (let [db-spec {:dbtype "sqlite" :dbname test-db-path}
-        ds (jdbc/get-datasource db-spec)]
-    
-    ;; Create schema
-    (schema/create-schema! ds)
-    
-    ;; Insert test book and get its ID
-    (jdbc/execute! ds
-                   (sql/format
-                     {:insert-into :books
-                      :values [{:book_id "test-book"
-                                :title "Test Documentation"
-                                :author "Test Author"
-                                :version "1.0.0"}]}))
-    
-    ;; Get the book's auto-generated ID
-    (let [book (first (jdbc/execute! ds (sql/format {:select [:id :book_id]
-                                                      :from [:books]
-                                                      :where [:= :book_id "test-book"]})))
-          book-id-num (:books/id book)]
-      
-      ;; Insert test sections (using numeric ID for foreign key)
-      (jdbc/execute! ds
-                     (sql/format
-                       {:insert-into :sections
-                        :values [{:book_id book-id-num
-                                :section_id "intro"
-                                :source_file "intro.md"
-                                :heading_level 1
-                                :heading_text "Introduction"
-                                :heading_slug "introduction"
-                                :content_markdown "{}"
-                                :content_html "<h1>Introduction</h1><p>Welcome to the test documentation.</p>"
-                                :content_plain "Introduction\n\nWelcome to the test documentation."
-                                :section_order 0
-                                :content_hash "intro-hash"}
-                                {:book_id book-id-num
-                                 :section_id "chapter-1"
-                                 :source_file "chapter1.md"
-                                 :heading_level 1
-                                 :heading_text "Chapter 1: Getting Started"
-                                 :heading_slug "chapter-1-getting-started"
-                                 :content_markdown "{}"
-                                 :content_html "<h1>Chapter 1: Getting Started</h1><p>This chapter covers the basics.</p>"
-                                 :content_plain "Chapter 1: Getting Started\n\nThis chapter covers the basics."
-                                 :section_order 1
-                                 :content_hash "ch1-hash"}
-                                {:book_id book-id-num
-                                 :section_id "chapter-2"
-                                 :source_file "chapter2.md"
-                                 :heading_level 1
-                                 :heading_text "Chapter 2: Advanced Topics"
-                                 :heading_slug "chapter-2-advanced-topics"
-                                 :content_markdown "{}"
-                                 :content_html "<h1>Chapter 2: Advanced Topics</h1><p>Advanced features and techniques.</p>"
-                                 :content_plain "Chapter 2: Advanced Topics\n\nAdvanced features and techniques."
-                                 :section_order 2
-                                 :content_hash "ch2-hash"}]})))
-    
-    ds))
-
-
-(defn cleanup-test-database
-  "Delete test database."
-  []
-  (let [db-file (java.io.File. test-db-path)]
-    (when (.exists db-file)
-      (.delete db-file))))
-
-
 ;; Test Fixtures
 
-(def ^:dynamic *server-stop-fn* nil)
+(def ^:dynamic *system* nil)
 (def ^:dynamic *driver* nil)
 
 
 (defn fixture-server
-  "Start test server before tests, stop after."
+  "Start test server with in-memory database before tests, stop after."
   [f]
-  (cleanup-test-database)
-  (create-test-database)
-  (let [stop-fn (server/start-server {:database test-db-path
-                                       :port test-port
-                                       :host "localhost"})]
-    (binding [*server-stop-fn* stop-fn]
-      (try
-        ;; Give server time to start
-        (Thread/sleep 1000)
-        (f)
-        (finally
-          (stop-fn)
-          (cleanup-test-database))))))
+  ;; Use the test helpers fixture to create an in-memory database with schema
+  (helpers/use-sqlite-database
+    (fn []
+      ;; Insert test book using the fixture's connection
+      (jdbc/execute! helpers/*connection*
+                     (sql/format
+                       {:insert-into :books
+                        :values [{:book_id "test-book"
+                                  :title "Test Documentation"
+                                  :author "Test Author"
+                                  :version "1.0.0"}]}))
+      
+      ;; Get the book's auto-generated ID
+      (let [book (jdbc/execute-one! helpers/*connection*
+                                    (sql/format {:select [:id :book_id]
+                                                 :from [:books]
+                                                 :where [:= :book_id "test-book"]}))
+            book-id-num (:books/id book)]
+        
+        ;; Insert test sections
+        (jdbc/execute! helpers/*connection*
+                       (sql/format
+                         {:insert-into :sections
+                          :values [{:book_id book-id-num
+                                    :section_id "intro"
+                                    :source_file "intro.md"
+                                    :heading_level 1
+                                    :heading_text "Introduction"
+                                    :heading_slug "introduction"
+                                    :content_markdown "{}"
+                                    :content_html "<h1>Introduction</h1><p>Welcome to the test documentation.</p>"
+                                    :content_plain "Introduction\n\nWelcome to the test documentation."
+                                    :section_order 0
+                                    :content_hash "intro-hash"}
+                                   {:book_id book-id-num
+                                    :section_id "chapter-1"
+                                    :source_file "chapter1.md"
+                                    :heading_level 1
+                                    :heading_text "Chapter 1: Getting Started"
+                                    :heading_slug "chapter-1-getting-started"
+                                    :content_markdown "{}"
+                                    :content_html "<h1>Chapter 1: Getting Started</h1><p>This chapter covers the basics.</p>"
+                                    :content_plain "Chapter 1: Getting Started\n\nThis chapter covers the basics."
+                                    :section_order 1
+                                    :content_hash "ch1-hash"}
+                                   {:book_id book-id-num
+                                    :section_id "chapter-2"
+                                    :source_file "chapter2.md"
+                                    :heading_level 1
+                                    :heading_text "Chapter 2: Advanced Topics"
+                                    :heading_slug "chapter-2-advanced-topics"
+                                    :content_markdown "{}"
+                                    :content_html "<h1>Chapter 2: Advanced Topics</h1><p>Advanced features and techniques.</p>"
+                                    :content_plain "Chapter 2: Advanced Topics\n\nAdvanced features and techniques."
+                                    :section_order 2
+                                    :content_hash "ch2-hash"}]})))
+      
+      ;; Create and start the viewer system with the in-memory connection
+      (let [sys (component/start
+                  (server/viewer-system {:connection helpers/*connection*
+                                         :port test-port
+                                         :host "localhost"}))]
+        (binding [*system* sys]
+          (try
+            ;; Give server time to start
+            (Thread/sleep 1000)
+            (f)
+            (finally
+              (component/stop sys))))))))
 
 
 (defn fixture-driver
   "Create browser driver for each test."
   [f]
-  (e/with-chrome-headless {:size [1920 1080]} driver
+  (e/with-firefox {:size [1920 1080]} driver
     (binding [*driver* driver]
       (f))))
 
@@ -149,11 +131,11 @@
     (e/go *driver* (str test-url "/book/test-book/section/intro"))
     (e/wait-visible *driver* {:tag :h1})
     
-    ;; First section should only have "Next" button
+    ;; First section should only have "Next →" button
     (is (e/has-text? *driver* "Next"))
     
-    ;; Click Next
-    (e/click *driver* [{:tag :a :role :button} {:fn/text "Next"}])
+    ;; Click Next using class selector (more reliable than text matching)
+    (e/click *driver* [{:tag :a :class :nav-button :fn/has-text "Next"}])
     (e/wait-visible *driver* {:tag :h1})
     
     ;; Should be on Chapter 1
@@ -164,7 +146,7 @@
     (is (e/has-text? *driver* "Next"))
     
     ;; Click Next again
-    (e/click *driver* [{:tag :a :role :button} {:fn/text "Next"}])
+    (e/click *driver* [{:tag :a :class :nav-button :fn/has-text "Next"}])
     (e/wait-visible *driver* {:tag :h1})
     
     ;; Should be on Chapter 2 (last section)
@@ -173,8 +155,8 @@
     ;; Last section should only have "Previous" button
     (is (e/has-text? *driver* "Previous"))
     
-    ;; Click Previous
-    (e/click *driver* [{:tag :a :role :button} {:fn/text "Previous"}])
+    ;; Click Previous using class selector
+    (e/click *driver* [{:tag :a :class :nav-button :fn/has-text "Previous"}])
     (e/wait-visible *driver* {:tag :h1})
     
     ;; Back to Chapter 1
@@ -211,9 +193,9 @@
     (e/go *driver* (str test-url "/book/test-book/section/intro"))
     (e/wait-visible *driver* {:tag :input :type :search})
     
-    ;; Fill search input
+    ;; Fill search input and submit by pressing Enter
     (e/fill *driver* {:tag :input :type :search} "basics")
-    (e/submit *driver* {:tag :form :class :search-form})
+    (e/fill *driver* {:tag :input :type :search} etaoin.keys/enter)
     
     ;; Wait for search results page
     (e/wait-visible *driver* {:tag :h1})
