@@ -39,29 +39,15 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y plantuml graphviz
 
-    - name: Cache Maven dependencies
+    - name: Cache Clojure dependencies
       uses: actions/cache@v4
       with:
-        path: ~/.m2/repository
-        key: ${{ runner.os }}-maven-${{ hashFiles('**/deps.edn') }}
+        path: |
+          ~/.m2/repository
+          .cpcache
+        key: ${{ runner.os }}-clojure-deps-${{ hashFiles('**/deps.edn', '**/bb.edn') }}
         restore-keys: |
-          ${{ runner.os }}-maven-
-
-    - name: Cache Clojure gitlibs
-      uses: actions/cache@v4
-      with:
-        path: ~/.gitlibs
-        key: ${{ runner.os }}-gitlibs-${{ hashFiles('**/deps.edn') }}
-        restore-keys: |
-          ${{ runner.os }}-gitlibs-
-
-    - name: Cache Clojure .cpcache
-      uses: actions/cache@v4
-      with:
-        path: .cpcache
-        key: ${{ runner.os }}-cpcache-${{ hashFiles('**/deps.edn') }}
-        restore-keys: |
-          ${{ runner.os }}-cpcache-
+          ${{ runner.os }}-clojure-deps-
 
     - name: Verify GraalVM installation
       run: |
@@ -79,21 +65,6 @@ jobs:
       run: |
         echo "PlantUML version:"
         plantuml -version
-
-    - name: Install dependencies (for cache)
-      run: |
-        clojure -P -M:jvm-base:dev:test
-        clojure -P -M:dev:format
-        clojure -P -M:lint
-
-    - name: Check what got cached
-      run: |
-        echo "=== Maven repository ==="
-        ls -la ~/.m2/repository/ | head -20 || echo "~/.m2/repository not found"
-        echo "=== Gitlibs ==="
-        ls -la ~/.gitlibs/ || echo "~/.gitlibs not found"
-        echo "=== .cpcache ==="
-        ls -la .cpcache/ || echo ".cpcache not found"
 
     - name: Run CI tasks
       run: bb ci
