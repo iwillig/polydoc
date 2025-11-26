@@ -34,6 +34,11 @@ jobs:
       with:
         pandoc-version: 'latest'
 
+    - name: Setup PlantUML
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y plantuml graphviz
+
     - name: Cache Maven dependencies
       uses: actions/cache@v4
       with:
@@ -69,6 +74,11 @@ jobs:
       run: |
         echo "Pandoc version:"
         pandoc --version
+
+    - name: Verify PlantUML installation
+      run: |
+        echo "PlantUML version:"
+        plantuml -version
 
     - name: Install dependencies (for cache)
       run: |
