@@ -1,9 +1,9 @@
 (ns polydoc.book.search
   "Full-text search functionality using SQLite FTS5."
   (:require
-    [honey.sql :as sql]
-    [next.jdbc :as jdbc]
-    [clojure.string :as str]))
+   [clojure.string :as str]
+   [honey.sql :as sql]
+   [next.jdbc :as jdbc]))
 
 
 (defn search
@@ -40,8 +40,8 @@
                    highlight-end "</mark>"
                    snippet-tokens 20}}]
    (when (and query (not (str/blank? query)))
-      (let [;; Base FTS5 search query
-            search-sql (str "SELECT 
+     (let [;; Base FTS5 search query
+           search-sql (str "SELECT 
                               fts.rowid as rowid,
                               s.section_id,
                               s.heading_text,
@@ -94,13 +94,13 @@
      (if (or include-content include-metadata)
        ;; Fetch additional data for each result
        (mapv (fn [result]
-               (let [section-data (jdbc/execute-one! 
-                                    db
-                                    (sql/format {:select (cond-> [:section_id]
-                                                           include-content (into [:content_markdown :content_html])
-                                                           include-metadata (conj :metadata_json))
-                                                 :from [:sections]
-                                                 :where [:= :id (:sections_fts/rowid result)]}))]
+               (let [section-data (jdbc/execute-one!
+                                   db
+                                   (sql/format {:select (cond-> [:section_id]
+                                                          include-content (into [:content_markdown :content_html])
+                                                          include-metadata (conj :metadata_json))
+                                                :from [:sections]
+                                                :where [:= :id (:sections_fts/rowid result)]}))]
                  (merge result section-data)))
              base-results)
        base-results))))

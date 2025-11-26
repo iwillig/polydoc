@@ -56,14 +56,14 @@
   
   See examples/ directory for more usage examples."
   (:require
-    [clojure.data.json :as json]
-    [clojure.java.io :as io]
-    [clojure.java.shell :as shell]
-    [clojure.string :as str]
-    [polydoc.filters.core :as core])
+   [clojure.data.json :as json]
+   [clojure.java.io :as io]
+   [clojure.java.shell :as shell]
+   [clojure.string :as str]
+   [polydoc.filters.core :as core])
   (:import
-    (java.nio.file
-      Paths)))
+   (java.nio.file
+    Paths)))
 
 
 (defn has-class?
@@ -170,27 +170,27 @@
   "Create a CodeBlock showing the error."
   [path error]
   (core/make-node
-    "CodeBlock"
-    [["" ["include-error"] []]
-     (str "ERROR including file: " path "\n"
-          error)]))
+   "CodeBlock"
+   [["" ["include-error"] []]
+    (str "ERROR including file: " path "\n"
+         error)]))
 
 
 (defn make-code-block
   "Create a CodeBlock from file content."
   [content lang]
   (core/make-node
-    "CodeBlock"
-    [["" (if lang [lang] []) []]
-     content]))
+   "CodeBlock"
+   [["" (if lang [lang] []) []]
+    content]))
 
 
 (defn make-raw-block
   "Create a RawBlock from file content."
   [content]
   (core/make-node
-    "RawBlock"
-    ["markdown" content]))
+   "RawBlock"
+   ["markdown" content]))
 
 
 (defn detect-cycle
@@ -250,9 +250,9 @@
                     (if (:success parse-result)
                       ;; Return blocks as a Div to keep them grouped
                       (core/make-node
-                        "Div"
-                        [["" ["included"] [["source" resolved-path]]]
-                         (:blocks parse-result)])
+                       "Div"
+                       [["" ["included"] [["source" resolved-path]]]
+                        (:blocks parse-result)])
                       (make-error-block file-path-raw (:error parse-result))))
 
                   ;; Unknown mode
@@ -290,8 +290,8 @@
 
        ;; Process includes
        (core/walk-ast
-         #(transform-include-block % (assoc opts :current-depth current-depth))
-         ast)))))
+        #(transform-include-block % (assoc opts :current-depth current-depth))
+        ast)))))
 
 
 (defn main

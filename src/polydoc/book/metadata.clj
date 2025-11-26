@@ -1,11 +1,11 @@
 (ns polydoc.book.metadata
   "Parse and validate polydoc.yml metadata files."
   (:require
-    [clj-yaml.core :as yaml]
-    [clojure.java.io :as io]
-    [clojure.string :as str]
-    [malli.core :as m]
-    [malli.error :as me]))
+   [clj-yaml.core :as yaml]
+   [clojure.java.io :as io]
+   [clojure.string :as str]
+   [malli.core :as m]
+   [malli.error :as me]))
 
 
 ;; Malli schema for polydoc.yml validation
@@ -39,8 +39,8 @@
    [:sections
     [:sequential
      [:or
-      :string  ; Simple format: just file path
-      [:map    ; Extended format: file + options
+      :string  ;; Simple format: just file path
+      [:map    ;; Extended format: file + options
        [:file :string]
        [:title {:optional true} :string]
        [:filters {:optional true} [:sequential :string]]

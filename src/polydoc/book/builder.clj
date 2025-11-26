@@ -26,20 +26,20 @@
   - polydoc.db.schema for database structure
   - polydoc.filters.core for filter execution"
   (:require
-    [clojure.data.json :as json]
-    [clojure.java.io :as io]
-    [clojure.java.shell :as shell]
-    [clojure.string :as str]
-    [honey.sql :as sql]
-    [next.jdbc :as jdbc]
-    [polydoc.book.metadata :as metadata]
-    [polydoc.db.schema :as schema]
-    [polydoc.filters.clojure-exec :as clj-exec]
-    [polydoc.filters.include :as include]
-    [polydoc.filters.javascript-exec :as js-exec]
-    [polydoc.filters.plantuml :as plantuml]
-    [polydoc.filters.python-exec :as py-exec]
-    [polydoc.filters.sqlite-exec :as sqlite-exec]))
+   [clojure.data.json :as json]
+   [clojure.java.io :as io]
+   [clojure.java.shell :as shell]
+   [clojure.string :as str]
+   [honey.sql :as sql]
+   [next.jdbc :as jdbc]
+   [polydoc.book.metadata :as metadata]
+   [polydoc.db.schema :as schema]
+   [polydoc.filters.clojure-exec :as clj-exec]
+   [polydoc.filters.include :as include]
+   [polydoc.filters.javascript-exec :as js-exec]
+   [polydoc.filters.plantuml :as plantuml]
+   [polydoc.filters.python-exec :as py-exec]
+   [polydoc.filters.sqlite-exec :as sqlite-exec]))
 
 
 ;; Database Operations
@@ -71,16 +71,16 @@
     ;; Use INSERT OR REPLACE to handle re-builds
     (jdbc/execute! ds
                    (sql/format
-                     {:insert-into :books
-                      :values [{:book_id book-id
-                                :title title
-                                :author author
-                                :version version}]
-                      :on-conflict :book_id
-                      :do-update-set {:title title
-                                      :author author
-                                      :version version
-                                      :updated_at [:datetime "now"]}}))
+                    {:insert-into :books
+                     :values [{:book_id book-id
+                               :title title
+                               :author author
+                               :version version}]
+                     :on-conflict :book_id
+                     :do-update-set {:title title
+                                     :author author
+                                     :version version
+                                     :updated_at [:datetime "now"]}}))
     book-id))
 
 
@@ -216,7 +216,7 @@
   [{:title (str "Content from " (.getName (io/file file-path)))
     :level 1
     :content (json/write-str ast)
-    :ast ast  ; Include AST for HTML/plain text generation
+    :ast ast  ;; Include AST for HTML/plain text generation
     :hash (str (hash ast))}])
 
 
@@ -242,20 +242,20 @@
         content-plain (when section-ast (ast-to-plain-text section-ast))]
     (jdbc/execute! ds
                    (sql/format
-                     {:insert-into :sections
-                      :values [{:book_id book-id
-                                :section_id section-id
-                                :source_file (str file-path)
-                                :heading_level (:level section-data)
-                                :heading_text heading-text
-                                :heading_slug heading-slug
-                                :content_markdown (:content section-data)
-                                :content_html content-html
-                                :content_plain content-plain
-                                :section_order section-order
-                                :parent_section_id nil  ; Placeholder
-                                :content_hash (:hash section-data)
-                                :metadata_json nil}]}))))
+                    {:insert-into :sections
+                     :values [{:book_id book-id
+                               :section_id section-id
+                               :source_file (str file-path)
+                               :heading_level (:level section-data)
+                               :heading_text heading-text
+                               :heading_slug heading-slug
+                               :content_markdown (:content section-data)
+                               :content_html content-html
+                               :content_plain content-plain
+                               :section_order section-order
+                               :parent_section_id nil  ;; Placeholder
+                               :content_hash (:hash section-data)
+                               :metadata_json nil}]}))))
 
 
 ;; File Processing
@@ -302,7 +302,7 @@
         sections (:sections metadata)]
     (println "Processing" (count sections) "section files...")
     (doall
-      (map #(process-file metadata ds book-id %) sections))))
+     (map #(process-file metadata ds book-id %) sections))))
 
 
 ;; Output Generation

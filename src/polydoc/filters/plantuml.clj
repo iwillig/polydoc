@@ -45,12 +45,12 @@
   
   See examples/ directory for more usage examples."
   (:require
-    [clojure.java.io :as io]
-    [clojure.string :as str]
-    [polydoc.filters.core :as core])
+   [clojure.java.io :as io]
+   [clojure.string :as str]
+   [polydoc.filters.core :as core])
   (:import
-    (java.util
-      Base64)))
+   (java.util
+    Base64)))
 
 
 (defn has-class?
@@ -92,7 +92,7 @@
     "eps" "-teps"
     "latex" "-tlatex"
     "utxt" "-tutxt"
-    "-tsvg")) ; default
+    "-tsvg")) ;; default
 
 (defn render-plantuml
   "Render PlantUML code to image using command-line tool.
@@ -143,12 +143,12 @@
   "Create a CodeBlock showing the error."
   [code error]
   (core/make-node
-    "CodeBlock"
-    [["" ["plantuml-error"] []]
-     (str "ERROR rendering PlantUML:\n"
-          error
-          "\n\nOriginal code:\n"
-          code)]))
+   "CodeBlock"
+   [["" ["plantuml-error"] []]
+    (str "ERROR rendering PlantUML:\n"
+         error
+         "\n\nOriginal code:\n"
+         code)]))
 
 
 (defn make-image-node
@@ -157,9 +157,9 @@
   (if is-text?
     ;; For text output, use CodeBlock
     (core/make-node
-      "CodeBlock"
-      [["" ["plantuml-output"] []]
-       output])
+     "CodeBlock"
+     [["" ["plantuml-output"] []]
+      output])
 
     ;; For binary output, use Image with data URI
     (let [mime-type (case (str/lower-case format)
@@ -170,12 +170,12 @@
                       "image/svg+xml")
           data-uri (str "data:" mime-type ";base64," output)]
       (core/make-node
-        "Para"
-        [(core/make-node
-           "Image"
-           [["" ["plantuml"] []]  ; attrs
-            []                     ; caption (empty)
-            [data-uri ""]])]))))   ; target (url, title)
+       "Para"
+       [(core/make-node
+         "Image"
+         [["" ["plantuml"] []]  ;; attrs
+          []                     ;; caption (empty)
+          [data-uri ""]])]))))   ;; target (url, title)
 
 (defn transform-plantuml-block
   "Transform a PlantUML code block into an image.

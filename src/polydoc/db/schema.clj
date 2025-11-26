@@ -1,11 +1,11 @@
 (ns polydoc.db.schema
   "Database schema management using Ragtime migrations."
   (:require
-    [clojure.java.io :as io]
-    [clojure.edn :as edn]
-    [next.jdbc :as jdbc]
-    [ragtime.next-jdbc :as ragtime-jdbc]
-    [ragtime.repl :as ragtime-repl]))
+   [clojure.edn :as edn]
+   [clojure.java.io :as io]
+   [next.jdbc :as jdbc]
+   [ragtime.next-jdbc :as ragtime-jdbc]
+   [ragtime.repl :as ragtime-repl]))
 
 
 (defn load-edn-migrations
@@ -122,9 +122,9 @@
    ;; => \"001-initial-schema\""
   [db]
   (try
-    (let [result (jdbc/execute-one! 
-                   db 
-                   ["SELECT id FROM ragtime_migrations ORDER BY created_at DESC LIMIT 1"])]
+    (let [result (jdbc/execute-one!
+                  db
+                  ["SELECT id FROM ragtime_migrations ORDER BY created_at DESC LIMIT 1"])]
       (:ragtime_migrations/id result))
     (catch Exception _
       nil)))
@@ -157,9 +157,9 @@
   [db]
   (try
     ;; Count how many migrations are applied
-    (let [count-result (jdbc/execute-one! 
-                         db 
-                         ["SELECT COUNT(*) as count FROM ragtime_migrations"])
+    (let [count-result (jdbc/execute-one!
+                        db
+                        ["SELECT COUNT(*) as count FROM ragtime_migrations"])
           migration-count (:count count-result 0)]
       (when (pos? migration-count)
         (rollback! db migration-count)))

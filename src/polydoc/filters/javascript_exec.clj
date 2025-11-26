@@ -49,13 +49,13 @@
   
   See examples/ directory for more usage examples."
   (:require
-    [clojure.string :as str]
-    [polydoc.filters.core :as core])
+   [clojure.string :as str]
+   [polydoc.filters.core :as core])
   (:import
-    (java.io
-      ByteArrayOutputStream)
-    (org.graalvm.polyglot
-      Context)))
+   (java.io
+    ByteArrayOutputStream)
+   (org.graalvm.polyglot
+    Context)))
 
 
 (defn has-class?
@@ -98,7 +98,7 @@
       (with-open [ctx (-> (Context/newBuilder (into-array String ["js"]))
                           (.out out)
                           (.err err)
-                          (.allowAllAccess false)  ; Sandboxed
+                          (.allowAllAccess false)  ;; Sandboxed
                           (.build))]
         (let [value (.eval ctx "js" code)]
           (reset! result (.toString value))))

@@ -39,10 +39,10 @@
   
   See examples/ directory for more usage examples."
   (:require
-    [clojure.string :as str]
-    [next.jdbc :as jdbc]
-    [next.jdbc.result-set :as rs]
-    [polydoc.filters.core :as core]))
+   [clojure.string :as str]
+   [next.jdbc :as jdbc]
+   [next.jdbc.result-set :as rs]
+   [polydoc.filters.core :as core]))
 
 
 (defn has-class?
@@ -110,12 +110,13 @@
   "Format a single table cell in Pandoc format.
    Cell format: [attrs alignment rowspan colspan blocks]"
   [value]
-  [["" [] []]              ; attrs
-   {:t "AlignDefault"}     ; alignment
-   1                       ; rowspan
-   1                       ; colspan
-   [{:t "Plain"            ; blocks
+  [["" [] []]              ;; attrs
+   {:t "AlignDefault"}     ;; alignment
+   1                       ;; rowspan
+   1                       ;; colspan
+   [{:t "Plain"            ;; blocks
      :c [{:t "Str" :c (str value)}]}]])
+
 
 (defn format-table-row
   "Format a single row as Pandoc table cells."
@@ -163,17 +164,17 @@
 
           ;; Table head - array format: [attrs, [rows]]
           ;; Each row is [row-attrs, cells]
-          head [["" [] []]  ; head attrs
-                [[["" [] []]  ; row attrs
+          head [["" [] []]  ;; head attrs
+                [[["" [] []]  ;; row attrs
                   header-cells]]]
 
           ;; Table body - array format for each body:
           ;; [body-attrs, row-head-cols, head-rows, body-rows]
-          bodies [[["" [] []]  ; body attrs
-                   0           ; row head columns
-                   []          ; head rows
+          bodies [[["" [] []]  ;; body attrs
+                   0           ;; row head columns
+                   []          ;; head rows
                    (mapv (fn [row-cells]
-                           [["" [] []]  ; row attrs
+                           [["" [] []]  ;; row attrs
                             row-cells])
                          data-rows)]]
 
@@ -191,13 +192,13 @@
     "No results"
     (let [columns (keys (first results))
           col-widths (reduce
-                       (fn [widths row]
-                         (merge-with max
-                                     widths
-                                     (zipmap columns
-                                             (map #(count (str (get row %))) columns))))
-                       (zipmap columns (map #(count (str %)) columns))
-                       results)
+                      (fn [widths row]
+                        (merge-with max
+                                    widths
+                                    (zipmap columns
+                                            (map #(count (str (get row %))) columns))))
+                      (zipmap columns (map #(count (str %)) columns))
+                      results)
 
           format-row (fn [row]
                        (str/join " | "

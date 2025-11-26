@@ -39,8 +39,8 @@
   
   See examples/ directory for more usage examples."
   (:require
-    [clojure.string :as str]
-    [polydoc.filters.core :as core]))
+   [clojure.string :as str]
+   [polydoc.filters.core :as core]))
 
 
 (defn has-class?

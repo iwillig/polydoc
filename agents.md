@@ -1190,6 +1190,189 @@ Use clojure-skills to search for:
 - [Malli](https://github.com/metosin/malli) - Data validation
 - [hashp](https://github.com/weavejester/hashp) - Debug printing
 
+## Browser Testing & Debugging
+
+### Etaoin Browser Automation
+
+Polydoc uses [Etaoin](https://github.com/clj-commons/etaoin) for browser automation testing with Firefox/GeckoDriver (migrated from Chrome/ChromeDriver).
+
+**Key lessons learned:**
+
+#### 1. Database Schema Mismatches
+
+**Problem Pattern:** Functions query by text identifiers but compare against numeric foreign keys.
+
+```clojure
+;; WRONG: Comparing text book_id against numeric sections.book_id FK
+(jdbc/execute! ds
+  (sql/format {:select [:*]
+               :from [:sections]
+               :where [:= :book_id (str book-id)]}))  ; book-id is "test-book" but sections.book_id is 1
+
+;; RIGHT: JOIN to resolve text ID to numeric ID
+(jdbc/execute! ds
+  (sql/format {:select [:sections.*]
+               :from [:sections]
+               :join [:books [:= :sections.book_id :books.id]]
+               :where [:= :books.book_id book-id]}))  ; Now compares text to text
+```
+
+**Debugging approach:**
+- Test queries directly via REPL with known data
+- Check schema for ID types (INTEGER vs TEXT)
+- Verify foreign key relationships
+- Add JOINs when crossing table boundaries
+
+#### 2. Firefox vs Chrome Selector Differences
+
+**Problem:** Text matching behaves differently between browsers.
+
+```clojure
+;; Button HTML: <a role="button">Next →</a>
+
+;; WRONG: Exact text match fails due to arrow character
+(e/click driver [{:tag :a :role :button} {:fn/text "Next"}])
+;; Error: Unable to locate element with text "Next"
+
+;; RIGHT: Use partial text match with class selector
+(e/click driver [{:tag :a :class :nav-button :fn/has-text "Next"}])
+;; Works! Matches "Next" within "Next →"
+```
+
+**Best practices:**
+- Use `:fn/has-text` for partial text matching
+- Combine with class/role selectors for specificity
+- Test selectors in both headless and non-headless modes
+- Consider special characters (arrows, emojis) in UI text
+
+#### 3. Form Submission in Firefox
+
+**Problem:** `e/submit` on form elements not supported in Firefox.
+
+```clojure
+;; WRONG: Firefox says form "not reachable by keyboard"
+(e/fill driver {:tag :input :type :search} "query")
+(e/submit driver {:tag :form :class :search-form})
+;; Error: Element not reachable by keyboard
+
+;; RIGHT: Submit by pressing Enter in input field
+(e/fill driver {:tag :input :type :search} "query")
+(e/fill driver {:tag :input :type :search} etaoin.keys/enter)
+;; Works! Simulates user pressing Enter
+```
+
+**Alternative patterns:**
+- Click submit button if one exists
+- Use `e/fill-human` for human-like typing + Enter
+- Press Enter key explicitly after filling input
+
+#### 4. Conditional Rendering Bugs
+
+**Problem:** Inverted if/else logic hiding results.
+
+```clojure
+;; WRONG: Results rendered in "empty" branch
+(if (empty? results)
+  [:p "No results."
+   [:div (for [r results] ...)]]  ; Never rendered when results exist!
+  nil)
+
+;; RIGHT: Results in else branch
+(if (empty? results)
+  [:p "No results."]
+  [:div (for [r results] ...)])  ; Rendered when results exist
+```
+
+**Debugging approach:**
+- Test page rendering via REPL with known data
+- Generate HTML and inspect structure
+- Check conditional logic carefully
+- Verify both empty and non-empty cases
+
+#### 5. Search Result URLs
+
+**Problem:** Missing context in search results links.
+
+```clojure
+;; WRONG: Link missing book_id context
+[:a {:href (str "/section/" section-id)} ...]
+;; Doesn't match routing: /book/:book-id/section/:section-id
+
+;; RIGHT: Include book_id in search results and URLs
+;; 1. Add to SQL query
+"SELECT s.section_id, b.book_id, ... FROM sections_fts JOIN books ..."
+
+;; 2. Use in URL generation
+[:a {:href (str "/book/" book-id "/section/" section-id)} ...]
+```
+
+**Pattern:** When building links, ensure you have all context needed for routing.
+
+#### 6. FTS5 Trigger Verification
+
+**Problem:** Search returns no results despite data existing.
+
+**Debugging checklist:**
+1. Verify FTS5 table is populated (check triggers fire on INSERT)
+2. Test search function directly via REPL
+3. Check query syntax (FTS5 uses special syntax)
+4. Inspect actual SQL being generated
+5. Verify JOIN conditions between FTS5 and main tables
+
+```clojure
+;; Test FTS5 population
+(jdbc/execute! ds ["SELECT * FROM sections_fts"])
+;; Should show entries after inserting into sections table
+
+;; Test search directly
+(search/search ds "test-query" {:limit 10})
+;; Should return results if FTS5 is working
+```
+
+#### 7. Browser Testing Best Practices
+
+**DO:**
+- Start simple: test page loading first, then interactions
+- Use REPL to generate and inspect HTML before browser tests
+- Add explicit waits for dynamic content: `(e/wait-visible driver selector)`
+- Test with visible browser first, then headless after working
+- Verify database state via REPL before running browser tests
+- Use class-based selectors over text matching when possible
+
+**DON'T:**
+- Assume selectors work the same across browsers
+- Skip REPL validation of page rendering
+- Forget to reload namespaces after fixing server code
+- Use brittle selectors (exact text, complex XPath)
+- Mix test data setup issues with browser interaction issues
+
+#### 8. CI/CD Browser Testing
+
+**GitHub Actions Firefox setup:**
+
+```yaml
+- name: Setup Firefox and GeckoDriver
+  run: |
+    # Firefox is pre-installed on ubuntu-latest
+    # Install GeckoDriver
+    GECKODRIVER_VERSION=$(curl -s https://api.github.com/repos/mozilla/geckodriver/releases/latest | grep -oP '"tag_name": "\K(.*)(?=")')
+    wget https://github.com/mozilla/geckodriver/releases/download/${GECKODRIVER_VERSION}/geckodriver-${GECKODRIVER_VERSION}-linux64.tar.gz
+    tar -xzf geckodriver-${GECKODRIVER_VERSION}-linux64.tar.gz
+    sudo mv geckodriver /usr/local/bin/
+    sudo chmod +x /usr/local/bin/geckodriver
+
+- name: Verify Firefox and GeckoDriver
+  run: |
+    firefox --version
+    geckodriver --version
+```
+
+**Key points:**
+- Firefox pre-installed on `ubuntu-latest` runners
+- GeckoDriver must be installed separately
+- Always verify versions before running tests
+- Use latest GeckoDriver release for compatibility
+
 ## Summary
 
 When working on Polydoc:

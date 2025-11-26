@@ -1,11 +1,11 @@
 (ns dev
   (:require
-    [clj-kondo.core :as clj-kondo]
-    [clj-reload.core :as reload]))
+   [clj-kondo.core :as clj-kondo]
+   [clj-reload.core :as reload]))
 
 
 (reload/init
-  {:dirs ["src" "dev" "test"]})
+ {:dirs ["src" "dev" "test"]})
 
 
 (defn lint

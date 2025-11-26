@@ -38,13 +38,14 @@
   (:require
    [clojure.string :as str]
    [com.stuartsierra.component :as component]
-   [hiccup.page :as page]
    [hiccup.core :refer [html]]
+   [hiccup.page :as page]
    [hiccup.util]
    [honey.sql :as sql]
    [next.jdbc :as jdbc]
    [org.httpkit.server :as http]
    [polydoc.book.search :as search]))
+
 
 ;; Database Queries
 
@@ -57,6 +58,7 @@
                    {:select [:*]
                     :from [:books]
                     :where [:= :book_id book-id]}))))
+
 
 (defn get-section
   "Get section by section_id."
@@ -71,6 +73,7 @@
                             [:= :books.book_id book-id]
                             [:= :sections.section_id section-id]]}))))
 
+
 (defn get-sections-for-book
   "Get all sections for a book, ordered by section_order."
   [ds book-id]
@@ -81,6 +84,7 @@
                    :join [:books [:= :sections.book_id :books.id]]
                    :where [:= :books.book_id book-id]
                    :order-by [[:section_order :asc]]})))
+
 
 (defn get-first-section
   "Get the first section of a book."
@@ -94,6 +98,7 @@
                     :where [:= :books.book_id book-id]
                     :order-by [[:section_order :asc]]
                     :limit 1}))))
+
 
 (defn get-previous-section
   "Get the previous section in order."
@@ -110,6 +115,7 @@
                     :order-by [[:section_order :desc]]
                     :limit 1}))))
 
+
 (defn get-next-section
   "Get the next section in order."
   [ds book-id current-order]
@@ -124,6 +130,7 @@
                             [:> :section_order current-order]]
                     :order-by [[:section_order :asc]]
                     :limit 1}))))
+
 
 ;; HTML Layout Components
 
@@ -202,6 +209,7 @@
      [:main.container
       content]]]))
 
+
 (defn toc-component
   "Table of contents component.
   
@@ -215,6 +223,7 @@
         [:li {:class (when is-current? "toc-current")}
          [:a {:href (str "/book/" book-id "/section/" (:sections/section_id section))}
           (:sections/heading_text section)]]))]])
+
 
 (defn section-nav
   "Previous/Next navigation buttons."
@@ -232,6 +241,7 @@
       "Next →"]
      [:div.nav-button])])
 
+
 (defn section-page
   "Render a section page."
   [ds book-id section-id]
@@ -245,18 +255,18 @@
         :book-title (:books/title book)
         :current-section section-id}
 
-        ;; Top navigation
+       ;; Top navigation
        (section-nav book-id prev next)
 
-        ;; Table of contents
+       ;; Table of contents
        (toc-component sections section-id book-id)
 
-        ;; Section content
+       ;; Section content
        [:article.content
         [:h1 (:sections/heading_text section)]
         [:div (hiccup.util/raw-string (:sections/content_html section))]]
 
-        ;; Bottom navigation
+       ;; Bottom navigation
        (section-nav book-id prev next)))
 
     ;; Section not found
@@ -266,6 +276,7 @@
       [:h1 "Section Not Found"]
       [:p "The requested section could not be found."]
       [:a {:href "/"} "Go to first section"]])))
+
 
 (defn search-results-page
   "Render search results page."
@@ -292,7 +303,7 @@
 
           [:div
            (for [result results]
-               ;; Search returns :section-id, :heading-text, :snippet, :source-file, :book-id
+             ;; Search returns :section-id, :heading-text, :snippet, :source-file, :book-id
              (let [section-id (:section-id result (:sections/section_id result))
                    book-id (:book-id result (:books/book_id result))]
                [:div.search-result
@@ -302,6 +313,7 @@
                 [:p (hiccup.util/raw-string (:snippet result))]
                 [:small
                  [:em "Source: " (:source-file result (:sections/source_file result))]]]))])]))))
+
 
 (defn index-page
   "Root index page - redirects to first section of first book."
@@ -338,6 +350,7 @@
                     [:p "Build a book first with: "
                      [:code "polydoc book -c polydoc.yml -o output/"]]]))})))
 
+
 ;; Request Routing
 
 (defn parse-query-params
@@ -348,6 +361,7 @@
           (for [param (str/split query-string #"&")]
             (let [[k v] (str/split param #"=" 2)]
               [(keyword k) (java.net.URLDecoder/decode v "UTF-8")])))))
+
 
 (defn handler
   "Main HTTP request handler."
@@ -385,12 +399,16 @@
                       [:p "The requested page could not be found."]
                       [:a {:href "/"} "Go to first section"]]))}))))
 
+
 ;; Component Definitions
 
-(defrecord Database [db-spec connection datasource]
+(defrecord Database
+           [db-spec connection datasource]
+
   component/Lifecycle
 
-  (start [this]
+  (start
+    [this]
     (println "Starting database component...")
     (cond
       ;; If connection is provided (e.g., in-memory for tests), use it directly
@@ -415,16 +433,22 @@
       (throw (ex-info "Database component requires :db-spec, :datasource, or :connection"
                       {:component this}))))
 
-  (stop [this]
+
+  (stop
+    [this]
     (println "Stopping database component...")
     ;; For file-based datasources, we don't need to close them
     ;; For provided connections, the caller is responsible for closing
     this))
 
-(defrecord WebServer [port host database server]
+
+(defrecord WebServer
+           [port host database server]
+
   component/Lifecycle
 
-  (start [this]
+  (start
+    [this]
     (println (str "Starting web server on " host ":" port "..."))
     (let [;; Get database connection/datasource from Database component
           db (or (:connection database)
@@ -440,12 +464,15 @@
 
       (assoc this :server srv)))
 
-  (stop [this]
+
+  (stop
+    [this]
     (println "Stopping web server...")
     (when server
       (server)
       (println "Server stopped."))
     (assoc this :server nil)))
+
 
 ;; System Construction
 

@@ -49,13 +49,13 @@
   
   See examples/ directory for more usage examples."
   (:require
-    [clojure.string :as str]
-    [polydoc.filters.core :as core])
+   [clojure.string :as str]
+   [polydoc.filters.core :as core])
   (:import
-    (java.io
-      ByteArrayOutputStream)
-    (org.graalvm.polyglot
-      Context)))
+   (java.io
+    ByteArrayOutputStream)
+   (org.graalvm.polyglot
+    Context)))
 
 
 (defn has-class?
@@ -98,14 +98,14 @@
       (with-open [ctx (-> (Context/newBuilder (into-array String ["python"]))
                           (.out out)
                           (.err err)
-                          (.allowAllAccess false)  ; Sandboxed
+                          (.allowAllAccess false)  ;; Sandboxed
                           (.build))]
         (let [value (.eval ctx "python" code)]
           ;; Use .asString() for string values to avoid extra quotes
           ;; Use .toString() for other types
           (reset! result (if (.isString value)
-                          (.asString value)
-                          (.toString value)))))
+                           (.asString value)
+                           (.toString value)))))
       (catch Exception e
         (reset! exception e)))
     {:result @result

@@ -21,18 +21,18 @@
   For more information, see README.md and examples/"
   (:gen-class)
   (:require
-    [cli-matic.core :as cli]
-    [clojure.java.io :as io]
-    [clojure.string :as str]
-    [next.jdbc :as jdbc]
-    [polydoc.book.builder :as builder]
-    [polydoc.book.search :as search]
-    [polydoc.filters.clojure-exec :as clj-exec]
-    [polydoc.filters.include :as include]
-    [polydoc.filters.javascript-exec :as js-exec]
-    [polydoc.filters.plantuml :as plantuml]
-    [polydoc.filters.python-exec :as py-exec]
-    [polydoc.filters.sqlite-exec :as sqlite-exec]))
+   [cli-matic.core :as cli]
+   [clojure.java.io :as io]
+   [clojure.string :as str]
+   [next.jdbc :as jdbc]
+   [polydoc.book.builder :as builder]
+   [polydoc.book.search :as search]
+   [polydoc.filters.clojure-exec :as clj-exec]
+   [polydoc.filters.include :as include]
+   [polydoc.filters.javascript-exec :as js-exec]
+   [polydoc.filters.plantuml :as plantuml]
+   [polydoc.filters.python-exec :as py-exec]
+   [polydoc.filters.sqlite-exec :as sqlite-exec]))
 
 
 ;; Version information
@@ -87,14 +87,14 @@
       (binding [*out* *err*]
         (println "ERROR: Database file not found:" database)
         (System/exit 1)))
-    
+
     ;; Connect to database
     (let [ds (jdbc/get-datasource {:dbtype "sqlite" :dbname database})
           search-opts (cond-> {:limit (or limit 10)}
                         book-id (assoc :book-id book-id))
           results (search/search ds query search-opts)
           total-count (search/count-results ds query search-opts)]
-      
+
       ;; Display results
       (if (seq results)
         (do
@@ -102,7 +102,7 @@
           (println "Search results for:" query)
           (println "Found" total-count "results (showing" (count results) ")")
           (println)
-          
+
           ;; Results
           (doseq [[idx result] (map-indexed vector results)]
             (let [{:sections/keys [heading_text heading_level source_file]
@@ -113,14 +113,14 @@
               (println "    File:" source_file)
               ;; Strip HTML tags from snippet for terminal display
               (let [clean-snippet (-> snippet
-                                     (str/replace #"<mark>" "**")
-                                     (str/replace #"</mark>" "**"))]
+                                      (str/replace #"<mark>" "**")
+                                      (str/replace #"</mark>" "**"))]
                 (println "    " clean-snippet))
               (println))))
-        
+
         ;; No results
         (println "No results found for:" query)))
-    
+
     (catch Exception e
       (binding [*out* *err*]
         (println "ERROR:" (.getMessage e))

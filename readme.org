@@ -51,12 +51,21 @@ Documentation is a fundamental part of software engineering. There are many diff
 - Result highlighting with context snippets
 - Result ranking by relevance
 
+**** Interactive Viewer
+
+- HTTP-based documentation browser with http-kit
+- Section navigation (Previous/Next buttons)
+- Collapsible table of contents
+- Full-text search interface
+- Pico CSS styling for clean UI
+- Browser automation testing with Etaoin/Firefox
+
 *** Coming Soon ⏳
 
-- Interactive HTTP-based documentation viewer
 - Python and Shell execution filters
 - PDF and EPUB output formats
 - GraalVM native compilation
+- Viewer enhancements (themes, bookmarks, history)
 
 ** Installation
 
@@ -322,15 +331,55 @@ clj-nrepl-eval -p 7889 "(+ 1 2 3)"
 *** Running Tests
 
 #+BEGIN_SRC bash
-# Via REPL
-clojure -M:test
+# Run all tests via Kaocha
+clojure -M:dev:test
 
-# Or in REPL
+# Run via REPL
 (require 'clojure.test)
 (clojure.test/run-all-tests #"polydoc.*")
 #+END_SRC
 
 Current status: *106 tests passing, 403 assertions, 0 failures* ✅
+
+**** Browser Testing
+
+Polydoc uses [[https://github.com/clj-commons/etaoin][Etaoin]] for browser automation testing with Firefox/GeckoDriver. Browser tests verify the interactive viewer functionality.
+
+**Prerequisites for browser tests:**
+
+#+BEGIN_SRC bash
+# macOS (via Homebrew)
+brew install --cask firefox
+brew install geckodriver
+
+# Ubuntu/Debian
+sudo apt-get install firefox
+# GeckoDriver - download from GitHub releases
+wget https://github.com/mozilla/geckodriver/releases/latest/download/geckodriver-linux64.tar.gz
+tar -xzf geckodriver-linux64.tar.gz
+sudo mv geckodriver /usr/local/bin/
+#+END_SRC
+
+**Running browser tests:**
+
+#+BEGIN_SRC bash
+# Browser tests run as part of the full test suite
+clojure -M:dev:test
+
+# Run only viewer tests
+clojure -M:dev:test --focus polydoc.viewer.server-test
+
+# In REPL
+(require '[clojure.test :as test])
+(test/run-tests 'polydoc.viewer.server-test)
+#+END_SRC
+
+Browser tests include:
+- Page loading and navigation
+- Section browsing (Previous/Next)
+- Table of contents interaction
+- Full-text search functionality
+- Responsive layout verification
 
 *** Linting
 
@@ -342,6 +391,28 @@ clojure -M:lint -m clj-kondo.main --lint src test
 (lint)
 #+END_SRC
 
+*** Continuous Integration
+
+The project uses GitHub Actions for CI/CD:
+
+#+BEGIN_SRC bash
+# Run CI tasks locally with Babashka
+bb ci
+
+# This runs:
+# 1. Clean build artifacts
+# 2. Format checking
+# 3. Code linting
+# 4. Full test suite (including browser tests)
+#+END_SRC
+
+GitHub Actions automatically:
+- Sets up GraalVM, Clojure, Pandoc, PlantUML
+- Installs Firefox and GeckoDriver for browser tests
+- Caches dependencies for faster builds
+- Runs all tests with coverage reporting
+- Uploads test results as artifacts
+
 ** Libraries Used
 
 - *cli-matic*: Command-line interface framework
@@ -352,9 +423,11 @@ clojure -M:lint -m clj-kondo.main --lint src test
 - *SQLite*: Database with FTS5 full-text search
 - *Malli*: Schema validation for configuration
 - *clj-yaml*: YAML configuration parsing
-- *http-kit*: HTTP server (coming soon for viewer)
+- *http-kit*: HTTP server for interactive viewer
+- *hiccup*: HTML generation
+- *etaoin*: Browser automation testing (Firefox/GeckoDriver)
 - *clj-kondo*: Code linting
-- *kaocha*: Test runner
+- *kaocha*: Test runner with coverage
 
 ** Architecture
 
@@ -428,7 +501,7 @@ Each example includes:
 
 ** Project Status
 
-*** Completed (42% - 20/48 tasks)
+*** Completed (52% - 25/48 tasks)
 
 *Phase 1: Core Infrastructure* ✅
 - CLI framework with cli-matic
@@ -453,13 +526,21 @@ Each example includes:
 - Advanced search operators
 - CLI search command with highlighting
 
+*Phase 5: Interactive Viewer* ✅
+- HTTP server with http-kit
+- HTML templates with Pico CSS
+- Section navigation (Previous/Next)
+- Table of contents with current highlighting
+- Search interface with result highlighting
+- Browser automation tests with Etaoin/Firefox
+
 *** In Progress
 
-*Phase 5: Interactive Viewer*
-- HTTP server with http-kit
-- HTML templates with search UI
-- Real-time search interface
-- Section navigation
+*Phase 6: Viewer Enhancements*
+- Theme switching (light/dark mode)
+- Bookmarks and history
+- Keyboard shortcuts
+- Export functionality
 
 *** Planned
 

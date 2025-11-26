@@ -28,10 +28,10 @@
   - polydoc.filters.clojure-exec for filter implementation examples
   - examples/ directory for complete filter examples"
   (:require
-    [clojure.data.json :as json]
-    [clojure.java.io :as io]
-    [clojure.pprint]
-    [clojure.walk :as walk]))
+   [clojure.data.json :as json]
+   [clojure.java.io :as io]
+   [clojure.pprint]
+   [clojure.walk :as walk]))
 
 
 ;; AST I/O Functions
@@ -73,14 +73,14 @@
     (with-open [writer (io/writer output)]
       (json/write ast writer)
       nil)
-    
+
     ;; Stdout - write to current *out*
     (= output "-")
     (do
       (json/write ast *out*)
       (flush)
       nil)
-    
+
     ;; Provided writer - write without closing
     :else
     (do
@@ -127,11 +127,11 @@
   Uses postwalk so children are processed before parents."
   [f ast]
   (walk/postwalk
-    (fn [node]
-      (if (ast-node? node)
-        (f node)
-        node))
-    ast))
+   (fn [node]
+     (if (ast-node? node)
+       (f node)
+       node))
+   ast))
 
 
 (defn filter-nodes
@@ -141,11 +141,11 @@
   [ast type]
   (let [matches (atom [])]
     (walk-ast
-      (fn [node]
-        (when (= (node-type node) type)
-          (swap! matches conj node))
-        node)
-      ast)
+     (fn [node]
+       (when (= (node-type node) type)
+         (swap! matches conj node))
+       node)
+     ast)
     @matches))
 
 
