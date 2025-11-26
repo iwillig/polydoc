@@ -43,14 +43,20 @@ jobs:
       run: |
         # Firefox is pre-installed on ubuntu-latest
         # Install GeckoDriver
-        GECKODRIVER_VERSION=$(curl -s https://api.github.com/repos/mozilla/geckodriver/releases/latest | grep -oP '"tag_name": "\K(.*)(?=")')
-        wget https://github.com/mozilla/geckodriver/releases/download/${GECKODRIVER_VERSION}/geckodriver-${GECKODRIVER_VERSION}-linux64.tar.gz
-        tar -xzf geckodriver-${GECKODRIVER_VERSION}-linux64.tar.gz
+        # Try to get latest version, fallback to known good version
+        GECKODRIVER_VERSION=$(curl -s https://api.github.com/repos/mozilla/geckodriver/releases/latest | jq -r '.tag_name' || echo "v0.35.0")
+        
+        if [ -z "$GECKODRIVER_VERSION" ] || [ "$GECKODRIVER_VERSION" = "null" ]; then
+          echo "Failed to fetch latest version, using fallback v0.35.0"
+          GECKODRIVER_VERSION="v0.35.0"
+        fi
+        
+        echo "Installing GeckoDriver ${GECKODRIVER_VERSION}"
+        wget -q "https://github.com/mozilla/geckodriver/releases/download/${GECKODRIVER_VERSION}/geckodriver-${GECKODRIVER_VERSION}-linux64.tar.gz"
+        tar -xzf "geckodriver-${GECKODRIVER_VERSION}-linux64.tar.gz"
         sudo mv geckodriver /usr/local/bin/
         sudo chmod +x /usr/local/bin/geckodriver
-        # Verify installations
-        firefox --version
-        geckodriver --version
+        rm -f "geckodriver-${GECKODRIVER_VERSION}-linux64.tar.gz"
 
     - name: Cache Clojure dependencies
       uses: actions/cache@v4
