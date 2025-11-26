@@ -70,6 +70,21 @@ jobs:
         echo "Pandoc version:"
         pandoc --version
 
+    - name: Install dependencies (for cache)
+      run: |
+        clojure -P -M:jvm-base:dev:test
+        clojure -P -M:dev:format
+        clojure -P -M:lint
+
+    - name: Check what got cached
+      run: |
+        echo "=== Maven repository ==="
+        ls -la ~/.m2/repository/ | head -20 || echo "~/.m2/repository not found"
+        echo "=== Gitlibs ==="
+        ls -la ~/.gitlibs/ || echo "~/.gitlibs not found"
+        echo "=== .cpcache ==="
+        ls -la .cpcache/ || echo ".cpcache not found"
+
     - name: Run CI tasks
       run: bb ci
 
