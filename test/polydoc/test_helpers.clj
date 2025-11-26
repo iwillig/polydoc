@@ -3,7 +3,6 @@
             [ragtime.next-jdbc :as ragtime-jdbc]
             [ragtime.repl :as ragtime-repl]
             [ragtime.reporter]
-            [polydoc.db.schema :as schema]
             [ragtime.strategy]
             [clojure.test :refer [use-fixtures]])
   (:import (org.sqlite.core DB)

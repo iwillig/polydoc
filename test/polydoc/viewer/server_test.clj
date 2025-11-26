@@ -4,8 +4,8 @@
     [clojure.test :refer [deftest is testing use-fixtures]]
     [com.stuartsierra.component :as component]
     [etaoin.api :as e]
+    [etaoin.keys]
     [polydoc.viewer.server :as server]
-    [polydoc.db.schema :as schema]
     [polydoc.test-helpers :as helpers]
     [next.jdbc :as jdbc]
     [honey.sql :as sql]))
@@ -100,8 +100,8 @@
 (defn fixture-driver
   "Create browser driver for each test."
   [f]
-  (e/with-firefox {:size [1920 1080]} driver
-    (binding [*driver* driver]
+  (e/with-firefox {:size [1920 1080]} drv
+    (binding [*driver* drv]
       (f))))
 
 

@@ -38,7 +38,6 @@
   (:require
    [clojure.string :as str]
    [com.stuartsierra.component :as component]
-   [hiccup.core :refer [html]]
    [hiccup.page :as page]
    [hiccup.util]
    [honey.sql :as sql]

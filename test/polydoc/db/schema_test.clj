@@ -1,7 +1,6 @@
 (ns polydoc.db.schema-test
   (:require [clojure.test :refer [deftest is testing use-fixtures]]
             [polydoc.db.schema :as schema]
-            [polydoc.test-helpers :as helpers]
             [next.jdbc :as jdbc]
             [honey.sql :as sql]))
 
