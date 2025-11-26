@@ -34,16 +34,29 @@ jobs:
       with:
         pandoc-version: 'latest'
 
-    - name: Cache Clojure dependencies
+    - name: Cache Maven dependencies
       uses: actions/cache@v4
       with:
-        path: |
-          ~/.m2/repository
-          ~/.gitlibs
-          ~/.deps.clj
-        key: ${{ runner.os }}-graalvm-clojure-${{ hashFiles('**/deps.edn', '**/bb.edn') }}
+        path: ~/.m2/repository
+        key: ${{ runner.os }}-maven-${{ hashFiles('**/deps.edn') }}
         restore-keys: |
-          ${{ runner.os }}-graalvm-clojure-
+          ${{ runner.os }}-maven-
+
+    - name: Cache Clojure gitlibs
+      uses: actions/cache@v4
+      with:
+        path: ~/.gitlibs
+        key: ${{ runner.os }}-gitlibs-${{ hashFiles('**/deps.edn') }}
+        restore-keys: |
+          ${{ runner.os }}-gitlibs-
+
+    - name: Cache Clojure .cpcache
+      uses: actions/cache@v4
+      with:
+        path: .cpcache
+        key: ${{ runner.os }}-cpcache-${{ hashFiles('**/deps.edn') }}
+        restore-keys: |
+          ${{ runner.os }}-cpcache-
 
     - name: Verify GraalVM installation
       run: |
