@@ -98,11 +98,16 @@
 
 
 (defn fixture-driver
-  "Create browser driver for each test."
+  "Create browser driver for each test.
+  
+  Uses headless mode when running in CI environment (CI=true env var)."
   [f]
-  (e/with-firefox {:size [1920 1080]} drv
-    (binding [*driver* drv]
-      (f))))
+  (let [ci? (= "true" (System/getenv "CI"))]
+    (e/with-firefox (cond-> {:size [1920 1080]}
+                      ci? (assoc :headless true))
+                    driver
+      (binding [*driver* driver]
+        (f)))))
 
 
 (use-fixtures :once fixture-server)

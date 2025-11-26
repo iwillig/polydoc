@@ -11,13 +11,17 @@
   This teaches clj-kondo that `bind` is a local binding available in the body."
   [{:keys [node]}]
   (let [children (rest (:children node))
-        ;; Check if first arg is a map (opts) or symbol (bind)
-        [opts bind body] (if (and (seq children)
-                                  (api/map-node? (first children)))
-                           ;; Has opts map: (with-firefox {...} bind body...)
-                           [(first children) (second children) (drop 2 children)]
-                           ;; No opts: (with-firefox bind body...)
-                           [nil (first children) (rest children)])]
+        first-child (first children)
+        second-child (second children)
+        ;; Determine if first arg is opts or bind
+        ;; If second arg exists and is a token (symbol), first arg is likely opts
+        has-opts? (and first-child second-child 
+                       (api/token-node? second-child))
+        [bind body] (if has-opts?
+                      ;; Has opts: (with-firefox opts bind body...)
+                      [second-child (drop 2 children)]
+                      ;; No opts: (with-firefox bind body...)
+                      [first-child (rest children)])]
     (when-not bind
       (throw (ex-info "with-firefox requires a binding symbol" {})))
     (when-not (api/token-node? bind)

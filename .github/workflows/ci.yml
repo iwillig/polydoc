@@ -94,6 +94,8 @@ jobs:
 
     - name: Run CI tasks
       run: bb ci
+      env:
+        CI: true
 
     - name: Upload test results
       if: always()
