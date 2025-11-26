@@ -32,6 +32,65 @@ As an LLM agent, you are restricted to using **only** these command-line tools:
 
 All other interactions must happen through the **REPL** using the connected nREPL server (port 7889).
 
+## Fish Shell Usage
+
+This project uses the **fish shell**. Fish has different syntax than bash/zsh, especially for multi-line strings and heredocs.
+
+### ❌ WRONG (bash heredoc syntax doesn't work in fish):
+
+```bash
+cat > file.txt << 'EOF'
+Line 1
+Line 2
+EOF
+```
+
+### ✅ CORRECT Fish shell patterns:
+
+**1. Multi-line strings in echo:**
+```fish
+echo "Line 1
+Line 2
+Line 3"
+```
+
+**2. Use printf for complex output:**
+```fish
+printf '%s\n' "Line 1" "Line 2" "Line 3" > file.txt
+```
+
+**3. Use command substitution with echo:**
+```fish
+echo (echo "Line 1"; echo "Line 2"; echo "Line 3") > file.txt
+```
+
+**4. For creating files, use the write tool instead:**
+- Prefer the `write` tool for creating files with content
+- This avoids shell syntax issues entirely
+
+**5. For clj-nrepl-eval with multi-line Clojure code:**
+```fish
+# WRONG - heredoc doesn't work
+clj-nrepl-eval -p 7889 <<'EOF'
+(defn foo [x] x)
+EOF
+
+# CORRECT - use double quotes and escape as needed
+clj-nrepl-eval -p 7889 "(defn foo [x] (println x) x)"
+
+# CORRECT - for complex code, write to file first, then eval
+# Or use parentheses to wrap multi-line Clojure
+```
+
+**Key differences from bash:**
+- No `<<EOF` heredoc syntax
+- Multi-line strings work directly in double quotes
+- Newlines in quoted strings are preserved
+- Use `printf` for formatted output
+- Command substitution uses `()` not `$()`
+
+**Best practice:** For any complex file content creation, use the `write` tool instead of shell commands.
+
 ## Dependencies Analysis
 
 ### Core Dependencies (deps.edn)
@@ -626,6 +685,7 @@ clojure-skills plan result set 1 \
    - Pure functions where possible
    - Data transformation over mutation
    - Clear naming conventions
+   - **ALWAYS put `require` in the `ns` form, NEVER inside functions**
 
 6. **Leverage existing libraries**
    - HoneySQL for SQL generation

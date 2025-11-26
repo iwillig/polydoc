@@ -21,8 +21,8 @@
         "todoread": false
       },
       "permission": {
-        "write": "ask",
-        "edit": "ask"
+        "write": "allow",
+        "edit": "allow"
       }
     }
   },

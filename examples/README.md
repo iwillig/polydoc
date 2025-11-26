@@ -56,12 +56,29 @@ pandoc examples/include-demo.md -t json | \
   pandoc -f json -o examples/include-output.html
 ```
 
+### JavaScript Execution Filter
+
+Execute JavaScript code blocks using GraalVM:
+
+```bash
+# Process the example file
+clojure -M:main filter -t javascript-exec \
+  -i examples/test-javascript-exec.json
+
+# Or use with Pandoc
+pandoc examples/javascript-exec-demo.md -t json | \
+  clojure -M:main filter -t javascript-exec | \
+  pandoc -f json -o examples/javascript-exec-output.html
+```
+
 ## Example Files
 
 - `test-clojure-exec.json` - Simple Pandoc AST with clojure-exec blocks
 - `clojure-exec-demo.md` - Markdown file demonstrating clojure-exec usage
 - `test-sqlite-exec.json` - Simple Pandoc AST with sqlite-exec blocks
 - `sqlite-exec-demo.md` - Markdown file demonstrating sqlite-exec usage
+- `test-javascript-exec.json` - Simple Pandoc AST with javascript-exec blocks
+- `javascript-exec-demo.md` - Markdown file demonstrating javascript-exec usage
 - `plantuml-demo.md` - Markdown file demonstrating PlantUML diagrams
 - `include-demo.md` - Markdown file demonstrating file inclusion
 - `README.md` - This file

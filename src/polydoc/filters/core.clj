@@ -38,42 +38,54 @@
 
 (defn read-ast
   "Read Pandoc JSON AST from input.
-  
-  Input can be:
-  - A string path to a file
-  - \"-\" for stdin
-  - An InputStream
-  - A Reader
-  
-  Returns the parsed AST as Clojure data."
+   
+   Input can be:
+   - A string path to a file
+   - \"-\" for stdin
+   - An InputStream
+   - A Reader
+   
+   Returns the parsed AST as Clojure data."
   [input]
-  (let [reader (cond
-                 (= input "-") *in*
-                 (string? input) (io/reader input)
-                 :else input)]
-    (json/read reader :key-fn keyword)))
+  ;; Use read-str instead of read to avoid pushback buffer overflow
+  ;; with large JSON documents from Pandoc
+  (let [json-str (cond
+                   (= input "-") (slurp *in*)
+                   (string? input) (slurp input)
+                   :else (slurp input))]
+    (json/read-str json-str :key-fn keyword)))
 
 
 (defn write-ast
   "Write Pandoc JSON AST to output.
-  
-  Output can be:
-  - A string path to a file
-  - \"-\" for stdout
-  - An OutputStream
-  - A Writer
-  
-  The AST is written as JSON."
+   
+   Output can be:
+   - A string path to a file
+   - \"-\" for stdout
+   - An OutputStream
+   - A Writer
+   
+   The AST is written as JSON."
   [ast output]
-  (if (string? output)
+  (cond
     ;; File path - use with-open to ensure writer is closed
+    (and (string? output) (not= output "-"))
     (with-open [writer (io/writer output)]
-      (json/write ast writer))
-    ;; Stdout or provided writer - don't close
-    (let [writer (if (= output "-") *out* output)]
       (json/write ast writer)
-      (when (= output "-")
-        (flush)))))
+      nil)
+    
+    ;; Stdout - write to current *out*
+    (= output "-")
+    (do
+      (json/write ast *out*)
+      (flush)
+      nil)
+    
+    ;; Provided writer - write without closing
+    :else
+    (do
+      (json/write ast output)
+      nil)))
 
 
 ;; AST Walking Utilities

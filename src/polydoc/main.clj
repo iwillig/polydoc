@@ -6,8 +6,8 @@
   Commands:
   
     filter  - Execute Pandoc filters
-    book    - Build complete books (coming soon)
-    search  - Search documentation (coming soon)
+    book    - Build complete books from polydoc.yml
+    search  - Search documentation with FTS5 full-text search
     view    - Interactive viewer (coming soon)
   
   Usage:
@@ -15,15 +15,23 @@
     clojure -M:main --help
     clojure -M:main filter --help
     clojure -M:main filter -t clojure-exec -i input.json -o output.json
+    clojure -M:main book -c polydoc.yml -o output/
+    clojure -M:main search -d polydoc.db -q \"search query\"
   
   For more information, see README.md and examples/"
   (:gen-class)
   (:require
     [cli-matic.core :as cli]
+    [clojure.java.io :as io]
+    [clojure.string :as str]
+    [next.jdbc :as jdbc]
+    [polydoc.book.builder :as builder]
+    [polydoc.book.search :as search]
     [polydoc.filters.clojure-exec :as clj-exec]
     [polydoc.filters.include :as include]
     [polydoc.filters.javascript-exec :as js-exec]
     [polydoc.filters.plantuml :as plantuml]
+    [polydoc.filters.python-exec :as py-exec]
     [polydoc.filters.sqlite-exec :as sqlite-exec]))
 
 
@@ -43,27 +51,82 @@
     "include" (include/main {:input input :output output})
     "javascript-exec" (js-exec/main {:input input :output output})
     "js-exec" (js-exec/main {:input input :output output})
+    "python-exec" (py-exec/main {:input input :output output})
+    "py-exec" (py-exec/main {:input input :output output})
     ;; Default case
     (binding [*out* *err*]
       (println "ERROR: Unknown filter type:" type)
-      (println "Available filters: clojure-exec, sqlite-exec, plantuml, include, javascript-exec")
+      (println "Available filters: clojure-exec, sqlite-exec, plantuml, include, javascript-exec, python-exec")
       (System/exit 1))))
 
 
 (defn book-cmd
   "Build a book from source files"
   [{:keys [config output]}]
-  (println "Book build command")
-  (println "Config:" config)
-  (println "Output:" output))
+  (try
+    (let [result (builder/build-book config output)]
+      (println "\n✓ Book build complete!")
+      (println "  Database:" (:database result))
+      (println "  HTML output:" (get-in result [:outputs :html]))
+      0)
+    (catch Exception e
+      (binding [*out* *err*]
+        (println "\nERROR building book:" (.getMessage e))
+        (when-let [cause (.getCause e)]
+          (println "Caused by:" (.getMessage cause)))
+        (.printStackTrace e *err*)
+        (System/exit 1)))))
 
 
 (defn search-cmd
   "Search documentation"
-  [{:keys [database query]}]
-  (println "Search command")
-  (println "Database:" database)
-  (println "Query:" query))
+  [{:keys [database query limit book-id]}]
+  (try
+    ;; Validate database exists
+    (when-not (.exists (io/file database))
+      (binding [*out* *err*]
+        (println "ERROR: Database file not found:" database)
+        (System/exit 1)))
+    
+    ;; Connect to database
+    (let [ds (jdbc/get-datasource {:dbtype "sqlite" :dbname database})
+          search-opts (cond-> {:limit (or limit 10)}
+                        book-id (assoc :book-id book-id))
+          results (search/search ds query search-opts)
+          total-count (search/count-results ds query search-opts)]
+      
+      ;; Display results
+      (if (seq results)
+        (do
+          ;; Header
+          (println "Search results for:" query)
+          (println "Found" total-count "results (showing" (count results) ")")
+          (println)
+          
+          ;; Results
+          (doseq [[idx result] (map-indexed vector results)]
+            (let [{:sections/keys [heading_text heading_level source_file]
+                   :keys [snippet]} result]
+              (println (str (inc idx) ".")
+                       heading_text
+                       (str "(level " heading_level ")"))
+              (println "    File:" source_file)
+              ;; Strip HTML tags from snippet for terminal display
+              (let [clean-snippet (-> snippet
+                                     (str/replace #"<mark>" "**")
+                                     (str/replace #"</mark>" "**"))]
+                (println "    " clean-snippet))
+              (println))))
+        
+        ;; No results
+        (println "No results found for:" query)))
+    
+    (catch Exception e
+      (binding [*out* *err*]
+        (println "ERROR:" (.getMessage e))
+        (when (.getCause e)
+          (println "Caused by:" (.getMessage (.getCause e))))
+        (System/exit 1)))))
 
 
 (defn view-cmd
@@ -120,7 +183,7 @@
                :runs book-cmd}
 
               {:command "search"
-               :description "Search documentation"
+               :description "Search documentation (FTS5 full-text search)"
                :opts [{:option "database"
                        :short "d"
                        :as "SQLite database file"
@@ -128,9 +191,18 @@
                        :required true}
                       {:option "query"
                        :short "q"
-                       :as "Search query"
+                       :as "Search query (FTS5 syntax: AND, OR, NOT, \"exact phrase\")"
                        :type :string
-                       :required true}]
+                       :required true}
+                      {:option "limit"
+                       :short "l"
+                       :as "Maximum number of results to show"
+                       :type :int
+                       :default 10}
+                      {:option "book-id"
+                       :short "b"
+                       :as "Filter results by book ID"
+                       :type :int}]
                :runs search-cmd}
 
               {:command "view"

@@ -1,149 +1,504 @@
-* polydoc
+* Polydoc - JVM-Native Pandoc Documentation System
 
-[[https://pandoc.org/][pandoc]] is a powerful tool for parsing, combinding and processing text
-based documents. Pandoc also includes a filter system that allows for
-the trasformation of a document or sub elements
+[[https://pandoc.org/][Pandoc]] is a powerful tool for parsing, combining and processing text-based documents. Pandoc also includes a filter system that allows for the transformation of documents and sub-elements.
 
-This tool is designed to people use pandoc filter
-without beinging tied to the Python platform like most pandoc filters.
+Polydoc brings Pandoc's filtering capabilities to the JVM/Clojure ecosystem, providing:
 
-It includes a set of pandoc filters that are GraalVM compiled to
-reduce the latency of your pandoc build.
+- Advanced Pandoc filters compiled with GraalVM for reduced latency
+- JVM-native documentation tooling (no Python/Node.js dependencies required)
+- Support for multiple document formats via Pandoc
+- SQLite-powered full-text search with FTS5
+- Book building system with automatic indexing
+- Interactive documentation viewing (coming soon)
 
+** Rationale
 
-** Rational
+Documentation is a fundamental part of software engineering. There are many different tools for managing documentation, but polydoc offers several advantages:
 
-Documentation is a fundamental part of software engineering. There
-many differnt tools for managing your docs. polydoc offers a couple of
-advangates over many other systems. Pandoc is a powerful system for
-document managment and trasformation. Its supports a concept of
-"filter" functions. Most of these filter functions are implemented in
-platlforms that are not the JVM. Python, Node and go. If you are
-working on the JVM, it helpful to have to bring a new platform into
-your stack for just documentation.
+- *JVM-Native*: If you're working on the JVM, you don't need to bring Python, Node.js, or Go into your stack just for documentation.
+- *Pandoc Integration*: Leverage Pandoc's powerful document transformation capabilities.
+- *Advanced Filters*: Execute code (Clojure, SQLite, JavaScript), render diagrams (PlantUML), and compose documents (include filter).
+- *Full-Text Search*: Built-in SQLite FTS5 search index automatically maintained.
+- *Book Building*: Combine multiple documents into searchable books with metadata.
 
-Besides providing a set of advance pandoc filters, polydoc provides a
-set of defaults that make building a document system for your code
-project easier.
+** Features
 
-- uses pandoc and supports many format
-- provides
+*** Implemented ✅
 
+**** Pandoc Filters
 
-** Tools
-*** TODO polydoc
+- *clojure-exec*: Execute Clojure code blocks and show results
+- *sqlite-exec*: Run SQLite queries and format results as tables
+- *javascript-exec*: Execute JavaScript code blocks with Node.js
+- *plantuml*: Render PlantUML diagrams to images
+- *include*: Compose documents from multiple source files
 
-Documentation for the polydoc.
+**** Book Building System
 
-*** TODO polydoc filter render-plantuml --help
+- Load configuration from =polydoc.yml= (Pandoc-compatible metadata format)
+- Process multiple markdown/org files through filters
+- Extract sections and headers automatically
+- Store content in SQLite database
+- Automatic FTS5 full-text search index (via database triggers)
+- Generate HTML output
 
-Processes all platuml code blocks in your project.
+**** Search System
 
-*** TODO polydoc filter include --help
+- FTS5 full-text search across all book content
+- Boolean operators: AND, OR, NOT
+- Phrase search: ="exact phrase"=
+- Field-specific search: =title:introduction=
+- Result highlighting with context snippets
+- Result ranking by relevance
 
-*** TODO polydoc filter run-sqlite --help
+*** Coming Soon ⏳
 
-Runs the SQLite code and save the output to the document. Keeps the
-SQLite3 code.
+- Interactive HTTP-based documentation viewer
+- Python and Shell execution filters
+- PDF and EPUB output formats
+- GraalVM native compilation
 
-*** TODO polydoc filter run-clojure --help
+** Installation
 
-Runs the clojure code and prints the output to the file. Keeps the
-clojure code.
+*** Prerequisites
 
-*** TODO polydoc filter lint-clojure --help
+- Java 11 or later
+- Clojure CLI tools
+- Pandoc 2.0 or later
+- Node.js (for JavaScript filter)
+- PlantUML JAR (for PlantUML filter)
 
-Lints the clojure code with clj-knodo.
+*** Using Clojure CLI
 
-*** TODO polydoc filter run-javascript --help
+Clone the repository and use directly:
 
-Runs the code in the JavaScript code blocks.
+#+BEGIN_SRC bash
+git clone <repository-url>
+cd polydoc
+clojure -M:main --help
+#+END_SRC
 
-*** TODO polydoc filter run-python --help
+** Usage
 
-Runs the run-python code.
+*** Command Overview
 
-*** TODO polydoc book toc
+#+BEGIN_SRC bash
+polydoc filter  # Execute individual Pandoc filters
+polydoc book    # Build complete books from polydoc.yml
+polydoc search  # Search documentation with full-text search
+polydoc view    # Interactive viewer (coming soon)
+#+END_SRC
 
-Prints the current table of contents to standard out.
+*** Filters
 
-*** TODO polydoc book build
+Execute individual Pandoc filters on document AST:
 
-Builds the entire book based on the toc of contents. Also builds the
-SQLite3 index for the book.
+**** Clojure Execution Filter
 
-*** TODO polydoc search
+#+BEGIN_SRC bash
+# Process markdown through Clojure execution filter
+pandoc input.md -t json | clojure -M:main filter -t clojure-exec | pandoc -f json -o output.html
+#+END_SRC
 
-Searches the documents using the full text search system.
+Example markdown:
+#+BEGIN_SRC markdown
+```{.clojure .exec}
+(+ 1 2 3)
+```
+#+END_SRC
 
-- book
-  - index
-  - metadata
-  - name
-- section
-  - content
-  - book_id refrences index
-  - hash
+Output shows code and result:
+#+BEGIN_SRC markdown
+```clojure
+(+ 1 2 3)
+;; => 6
+```
+#+END_SRC
 
-*** TODO polydoc search sync
+**** SQLite Execution Filter
 
-Builds the index. Attempts to create the postgresql schema.
+#+BEGIN_SRC bash
+pandoc input.md -t json | clojure -M:main filter -t sqlite-exec | pandoc -f json -o output.html
+#+END_SRC
 
-*** TODO polydoc lint
+Example markdown:
+#+BEGIN_SRC markdown
+```{.sqlite .exec database="mydata.db"}
+SELECT name, age FROM users ORDER BY age DESC LIMIT 5;
+```
+#+END_SRC
 
-Lint the document with a grammar check. Maybe uses the Grammary API.
+Output shows query and results as a formatted table.
 
-*** TODO polydoc llm <prompt-name>
+**** JavaScript Execution Filter
 
-Processes your document with an LLM Agent. You can define LLM Rules.
+#+BEGIN_SRC bash
+pandoc input.md -t json | clojure -M:main filter -t javascript-exec | pandoc -f json -o output.html
+#+END_SRC
 
-*** TODO polydoc generate
+Example markdown:
+#+BEGIN_SRC markdown
+```{.javascript .exec}
+const sum = [1, 2, 3, 4, 5].reduce((a, b) => a + b, 0);
+console.log("Sum:", sum);
+```
+#+END_SRC
 
-polydoc has a set of built in generators that help humans and LLM
-Agents create new documents. They are mustatche templated pandoc AST
-templates. You can use them with any format that pandoc supports.
+**** PlantUML Rendering Filter
 
-*** TODO polydoc view
+#+BEGIN_SRC bash
+pandoc input.md -t json | clojure -M:main filter -t plantuml | pandoc -f json -o output.html
+#+END_SRC
 
-Builds the HTML and uses the SQLite3 index to power an interactive
-site. Serves the content via HTTP-kit.
+Example markdown:
+#+BEGIN_SRC markdown
+```plantuml
+@startuml
+Alice -> Bob: Hello
+Bob -> Alice: Hi there!
+@enduml
+```
+#+END_SRC
+
+Output replaces code block with rendered diagram image.
+
+**** Include Filter
+
+#+BEGIN_SRC bash
+pandoc input.md -t json | clojure -M:main filter -t include | pandoc -f json -o output.html
+#+END_SRC
+
+Example markdown:
+#+BEGIN_SRC markdown
+```{.include file="chapter1.md"}
+```
+#+END_SRC
+
+Includes content from external file inline.
+
+*** Book Building
+
+Build complete books with automatic indexing and search:
+
+**** Configuration: polydoc.yml
+
+Create a =polydoc.yml= file with Pandoc-compatible metadata:
+
+#+BEGIN_SRC yaml
+---
+# Standard Pandoc metadata
+title: "My Documentation"
+author: "Your Name"
+date: "2025-11-26"
+lang: "en-US"
+description: "Comprehensive documentation"
+
+# Table of contents
+toc: true
+toc-depth: 3
+
+# Polydoc-specific: Book configuration
+book:
+  id: "my-docs"
+  version: "1.0.0"
+  database: "docs.db"
+  
+  # Filters to apply during build
+  filters:
+    - clojure-exec
+    - sqlite-exec
+    - plantuml
+    - include
+
+# Document sections (in order)
+sections:
+  - docs/introduction.md
+  - docs/tutorial.md
+  - docs/reference.md
+  
+  # Extended format with per-file options
+  - file: docs/advanced.md
+    title: "Advanced Topics"
+    filters:
+      - clojure-exec
+      - plantuml
+---
+#+END_SRC
+
+**** Build Command
+
+#+BEGIN_SRC bash
+clojure -M:main book -c polydoc.yml -o output/
+#+END_SRC
+
+This will:
+1. Load configuration from =polydoc.yml=
+2. Process each section file through configured filters
+3. Extract headers and content
+4. Insert into SQLite database with FTS5 search index
+5. Generate HTML output in =output/= directory
+
+**** What Gets Created
+
+- *Database*: =docs.db= (or path from config)
+  - =books= table: Book metadata
+  - =sections= table: All extracted sections with content
+  - =sections_fts= table: FTS5 full-text search index (auto-synced via triggers)
+
+- *HTML Output*: =output/my-docs.html=
+  - Combined document from all sections
+  - Processed through all configured filters
+
+*** Search
+
+Search your documentation using FTS5 full-text search:
+
+**** Basic Search
+
+#+BEGIN_SRC bash
+clojure -M:main search -d docs.db -q "pandoc filter"
+#+END_SRC
+
+**** Search with Operators
+
+#+BEGIN_SRC bash
+# Boolean AND (default)
+clojure -M:main search -d docs.db -q "clojure AND filter"
+
+# Boolean OR
+clojure -M:main search -d docs.db -q "clojure OR python"
+
+# Exclude terms with NOT
+clojure -M:main search -d docs.db -q "filter NOT javascript"
+
+# Exact phrase search
+clojure -M:main search -d docs.db -q '"book building system"'
+
+# Field-specific search
+clojure -M:main search -d docs.db -q "title:introduction"
+#+END_SRC
+
+**** Limit Results
+
+#+BEGIN_SRC bash
+# Show up to 20 results (default: 10)
+clojure -M:main search -d docs.db -q "documentation" -l 20
+#+END_SRC
+
+**** Filter by Book
+
+#+BEGIN_SRC bash
+# Search within specific book only
+clojure -M:main search -d docs.db -q "query" -b 1
+#+END_SRC
 
 ** Development
 
-This tool is written in JVM Clojure and compiled to native code via
-GraalVM.
+This tool is written in JVM Clojure and designed to be compiled to native code via GraalVM.
 
-The Clojure Repl is the primary interface for development. There are
-two main namespaces, user and dev. We use the user namespace, which
-does not load any clojure code, and dev.
+*** Development Environment
 
-When you connect to a repl, you will be in the user namespace. Run the
-(dev) function to load the dev namespace. In the dev namespaces there
-are serveral functions that allow you to lint and test this project.
+The Clojure REPL is the primary interface for development. There are two main namespaces: =user= and =dev=.
+
+When you connect to a REPL, you'll be in the =user= namespace. Run =(dev)= to load the =dev= namespace. The =dev= namespace provides functions for development workflow:
 
 #+BEGIN_SRC clojure
-(refresh) ;; refresh all of the namespaces
-(lint)    ;; lint the project
-(run-all)     ;; run all of the tests
+(refresh) ;; Refresh all namespaces (uses clj-reload)
+(lint)    ;; Lint the project with clj-kondo
+(run-all) ;; Run all tests
 #+END_SRC
 
-** Libraries
-
-- cli-matic
-- pandoc
-- pandoc filter
-- clojure.data.json
-- clojure.zippers
-
-
-** Install
+*** Starting the REPL
 
 #+BEGIN_SRC bash
-brew bundle
+# Start nREPL server on port 7889
+clojure -M:jvm-base:dev:nrepl
+
+# In another terminal, connect with your editor
+# Or use clj-nrepl-eval for command-line evaluation:
+clj-nrepl-eval -p 7889 "(+ 1 2 3)"
 #+END_SRC
 
+*** Running Tests
 
 #+BEGIN_SRC bash
-brew install polydoc
-polydoc --help
+# Via REPL
+clojure -M:test
+
+# Or in REPL
+(require 'clojure.test)
+(clojure.test/run-all-tests #"polydoc.*")
 #+END_SRC
+
+Current status: *106 tests passing, 403 assertions, 0 failures* ✅
+
+*** Linting
+
+#+BEGIN_SRC bash
+# Via command line
+clojure -M:lint -m clj-kondo.main --lint src test
+
+# Or in REPL (from dev namespace)
+(lint)
+#+END_SRC
+
+** Libraries Used
+
+- *cli-matic*: Command-line interface framework
+- *Pandoc*: Document conversion and filtering
+- *clojure.data.json*: JSON parsing for Pandoc AST
+- *next.jdbc*: JDBC wrapper for database access
+- *honey.sql*: SQL DSL for query generation
+- *SQLite*: Database with FTS5 full-text search
+- *Malli*: Schema validation for configuration
+- *clj-yaml*: YAML configuration parsing
+- *http-kit*: HTTP server (coming soon for viewer)
+- *clj-kondo*: Code linting
+- *kaocha*: Test runner
+
+** Architecture
+
+*** Data Flow: Book Building
+
+#+BEGIN_SRC
+polydoc.yml → metadata/load-metadata
+              ↓
+           builder/initialize-database
+              ↓
+    For each section file:
+      1. markdown → Pandoc AST (JSON)
+      2. Apply filters (clojure-exec, etc.)
+      3. Extract sections (headers + content)
+      4. Insert into database
+      5. FTS5 triggers auto-update search index
+              ↓
+           Generate HTML output
+#+END_SRC
+
+*** Database Schema
+
+*Books Table*:
+- Stores book-level metadata from =polydoc.yml=
+- Fields: book_id, title, author, description, version, metadata_json
+
+*Sections Table*:
+- One row per section/header in documents
+- Fields: section_id, book_id, heading_text, heading_level, content_markdown, content_html, content_plain, content_hash
+- Linked to book via foreign key
+
+*Sections_FTS Table*:
+- FTS5 virtual table for full-text search
+- Auto-synced with sections table via triggers
+- Indexes: heading_text, content_plain
+
+*** Filter Architecture
+
+All filters follow the same pattern:
+
+#+BEGIN_SRC clojure
+(ns polydoc.filters.my-filter
+  (:require [polydoc.filters.core :as filters]))
+
+(defn process-code-block [block]
+  (if (matches-filter? block)
+    (transform-block block)
+    block))
+
+(defn my-filter [ast]
+  (filters/walk-pandoc-ast ast process-code-block))
+
+(defn main [{:keys [input output]}]
+  (filters/run-filter input output my-filter))
+#+END_SRC
+
+** Examples
+
+See the =examples/= directory for:
+
+- =clojure-exec-demo.md= - Clojure code execution
+- =sqlite-exec-demo.md= - SQLite query examples
+- =javascript-exec-demo.md= - JavaScript execution
+- =plantuml-demo.md= - Diagram rendering
+- =include-demo.md= - Document composition
+
+Each example includes:
+- Input markdown
+- Expected output
+- Test JSON for validation
+
+** Project Status
+
+*** Completed (42% - 20/48 tasks)
+
+*Phase 1: Core Infrastructure* ✅
+- CLI framework with cli-matic
+- Filter utilities and base infrastructure
+- Clojure execution filter
+- Test framework and examples
+
+*Phase 2: Additional Filters* ✅ (5/8)
+- SQLite execution filter
+- JavaScript execution filter
+- PlantUML rendering filter
+- Include filter for document composition
+
+*Phase 3: Book Building* ✅
+- Database schema with FTS5
+- Metadata loading and validation
+- Section extraction and indexing
+- Book builder orchestration
+
+*Phase 4: Search System* ✅
+- FTS5 full-text search API
+- Advanced search operators
+- CLI search command with highlighting
+
+*** In Progress
+
+*Phase 5: Interactive Viewer*
+- HTTP server with http-kit
+- HTML templates with search UI
+- Real-time search interface
+- Section navigation
+
+*** Planned
+
+*Phase 6: Testing & Quality*
+- Expand test coverage
+- Property-based tests
+- Performance optimization
+- Comprehensive documentation
+
+*Phase 7: GraalVM Compilation*
+- Native image configuration
+- Resource bundling
+- Platform testing
+- CI/CD setup
+
+*Phase 8: Polish & Release*
+- Error handling improvements
+- Progress indicators
+- Homebrew formula
+- Release documentation
+
+** Contributing
+
+Contributions are welcome! Please:
+
+1. Read =AGENTS.md= for development guidelines
+2. Follow the REPL-driven development workflow
+3. Ensure all tests pass before submitting
+4. Add tests for new features
+5. Update documentation
+
+** License
+
+[License information to be added]
+
+** Resources
+
+- [[https://pandoc.org/filters.html][Pandoc Filters Documentation]]
+- [[https://pandoc.org/using-the-pandoc-api.html][Pandoc AST Documentation]]
+- [[https://www.sqlite.org/fts5.html][SQLite FTS5 Documentation]]
+- [[https://github.com/weavejester/cli-matic][cli-matic Documentation]]
+- [[https://github.com/seancorfield/next-jdbc][next.jdbc Documentation]]

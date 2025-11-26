@@ -38,6 +38,7 @@
     [polydoc.filters.include :as include]
     [polydoc.filters.javascript-exec :as js-exec]
     [polydoc.filters.plantuml :as plantuml]
+    [polydoc.filters.python-exec :as py-exec]
     [polydoc.filters.sqlite-exec :as sqlite-exec]))
 
 
@@ -92,6 +93,8 @@
    "sqlite" sqlite-exec/sqlite-exec-filter
    "javascript-exec" js-exec/javascript-exec-filter
    "js-exec" js-exec/javascript-exec-filter
+   "python-exec" py-exec/python-exec-filter
+   "py-exec" py-exec/python-exec-filter
    "plantuml" plantuml/plantuml-filter
    "include" include/include-filter})
 
@@ -147,6 +150,36 @@
                        :error (:err result)})))))
 
 
+(defn ast-to-html-string
+  "Convert Pandoc AST to HTML string.
+  
+  Returns HTML as a string rather than writing to file."
+  [ast]
+  (let [json-str (json/write-str ast)
+        result (shell/sh "pandoc" "-f" "json" "-t" "html"
+                         :in json-str)]
+    (if (zero? (:exit result))
+      (:out result)
+      (throw (ex-info "Failed to convert AST to HTML"
+                      {:exit (:exit result)
+                       :error (:err result)})))))
+
+
+(defn ast-to-plain-text
+  "Convert Pandoc AST to plain text.
+  
+  Strips formatting for search indexing."
+  [ast]
+  (let [json-str (json/write-str ast)
+        result (shell/sh "pandoc" "-f" "json" "-t" "plain"
+                         :in json-str)]
+    (if (zero? (:exit result))
+      (str/trim (:out result))
+      (throw (ex-info "Failed to convert AST to plain text"
+                      {:exit (:exit result)
+                       :error (:err result)})))))
+
+
 ;; Section Extraction (Placeholder - Task 235)
 
 (defn slugify
@@ -183,6 +216,7 @@
   [{:title (str "Content from " (.getName (io/file file-path)))
     :level 1
     :content (json/write-str ast)
+    :ast ast  ; Include AST for HTML/plain text generation
     :hash (str (hash ast))}])
 
 
@@ -190,17 +224,22 @@
   "Insert a section into database.
    
    Maps section data from intermediate format to database schema columns.
+   Generates HTML and plain text from AST for display and search.
    
    Intermediate format (from extract-sections):
-   {:title, :level, :content, :hash}
+   {:title, :level, :content, :hash, :ast}
    
    Database schema:
    {:section_id, :source_file, :heading_level, :heading_text, :heading_slug,
-    :content_markdown, :content_plain, :section_order, :content_hash}"
+    :content_markdown, :content_html, :content_plain, :section_order, :content_hash}"
   [ds book-id section-data file-path section-order]
   (let [section-id (generate-section-id file-path section-order)
         heading-text (:title section-data)
-        heading-slug (slugify heading-text)]
+        heading-slug (slugify heading-text)
+        ;; Generate HTML and plain text from AST
+        section-ast (:ast section-data)
+        content-html (when section-ast (ast-to-html-string section-ast))
+        content-plain (when section-ast (ast-to-plain-text section-ast))]
     (jdbc/execute! ds
                    (sql/format
                      {:insert-into :sections
@@ -211,7 +250,8 @@
                                 :heading_text heading-text
                                 :heading_slug heading-slug
                                 :content_markdown (:content section-data)
-                                :content_plain nil  ; Placeholder
+                                :content_html content-html
+                                :content_plain content-plain
                                 :section_order section-order
                                 :parent_section_id nil  ; Placeholder
                                 :content_hash (:hash section-data)

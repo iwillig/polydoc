@@ -106,12 +106,22 @@
      :exception @exception}))
 
 
+(defn format-table-cell
+  "Format a single table cell in Pandoc format.
+   Cell format: [attrs alignment rowspan colspan blocks]"
+  [value]
+  [["" [] []]              ; attrs
+   {:t "AlignDefault"}     ; alignment
+   1                       ; rowspan
+   1                       ; colspan
+   [{:t "Plain"            ; blocks
+     :c [{:t "Str" :c (str value)}]}]])
+
 (defn format-table-row
   "Format a single row as Pandoc table cells."
   [row columns]
   (mapv (fn [col]
-          {:t "Plain"
-           :c [{:t "Str" :c (str (get row col ""))}]})
+          (format-table-cell (get row col "")))
         columns))
 
 
@@ -133,46 +143,42 @@
     (let [columns (vec (keys (first results)))
           num-cols (count columns)
 
-          ;; Header row
+          ;; Header cells - now with full cell structure
           header-cells (mapv (fn [col]
-                               {:t "Plain"
-                                :c [{:t "Str" :c (str col)}]})
+                               (format-table-cell (str col)))
                              columns)
 
-          ;; Data rows
+          ;; Data rows - using the updated format-table-row
           data-rows (mapv #(format-table-row % columns) results)
 
           ;; Column specifications: [align width]
-          ;; AlignDefault, ColWidthDefault
           colspecs (vec (repeat num-cols
                                 [{:t "AlignDefault"} {:t "ColWidthDefault"}]))
 
           ;; Table attributes
           attrs ["" [] []]
 
-          ;; Caption (empty)
-          caption {:t "Caption" :c [nil []]}
+          ;; Caption (empty) - array format: [short-caption, long-caption-blocks]
+          caption [nil []]
 
-          ;; Table head
-          head {:t "TableHead"
-                :c [["" [] []]  ; head attrs
-                    [{:t "Row"
-                      :c [["" [] []]  ; row attrs
-                          header-cells]}]]}
+          ;; Table head - array format: [attrs, [rows]]
+          ;; Each row is [row-attrs, cells]
+          head [["" [] []]  ; head attrs
+                [[["" [] []]  ; row attrs
+                  header-cells]]]
 
-          ;; Table body
-          bodies [{:t "TableBody"
-                   :c [["" [] []]  ; body attrs
-                       0           ; row head columns
-                       []          ; head rows
-                       (mapv (fn [row-cells]
-                               {:t "Row"
-                                :c [["" [] []]  ; row attrs
-                                    row-cells]})
-                             data-rows)]}]
+          ;; Table body - array format for each body:
+          ;; [body-attrs, row-head-cols, head-rows, body-rows]
+          bodies [[["" [] []]  ; body attrs
+                   0           ; row head columns
+                   []          ; head rows
+                   (mapv (fn [row-cells]
+                           [["" [] []]  ; row attrs
+                            row-cells])
+                         data-rows)]]
 
-          ;; Table foot (empty)
-          foot {:t "TableFoot" :c [["" [] []] []]}]
+          ;; Table foot (empty) - array format: [attrs, rows]
+          foot [["" [] []] []]]
 
       {:t "Table"
        :c [attrs caption colspecs head bodies foot]})))

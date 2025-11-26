@@ -94,6 +94,133 @@
       (is (= "Para" (:t table)))
       (is (= "No results" (get-in table [:c 0 :c]))))))
 
+
+(deftest test-pandoc-table-caption-format
+  (testing "Caption is array format [short, long-blocks], not object"
+    (let [results [{:id 1 :name "test"}]
+          table (sqlite-exec/make-pandoc-table results)
+          caption (nth (:c table) 1)]  ; Caption is 2nd element in table :c
+      
+      ;; Caption must be a vector [short-caption, long-caption-blocks]
+      (is (vector? caption) "Caption should be a vector")
+      (is (= 2 (count caption)) "Caption should have 2 elements")
+      (is (nil? (first caption)) "Short caption should be nil")
+      (is (vector? (second caption)) "Long caption blocks should be a vector")
+      
+      ;; Caption should NOT be an object like {:t "Caption" :c ...}
+      (is (not (map? caption)) "Caption should not be a map/object"))))
+
+
+(deftest test-pandoc-table-head-format
+  (testing "TableHead is array format [attrs, rows], not object"
+    (let [results [{:id 1 :name "test"}]
+          table (sqlite-exec/make-pandoc-table results)
+          head (nth (:c table) 3)]  ; TableHead is 4th element
+      
+      ;; TableHead must be array: [attrs, [rows]]
+      (is (vector? head) "TableHead should be a vector")
+      (is (= 2 (count head)) "TableHead should have 2 elements [attrs, rows]")
+      
+      (let [[attrs rows] head]
+        (is (vector? attrs) "TableHead attrs should be a vector")
+        (is (= 3 (count attrs)) "TableHead attrs should be [id, classes, kvs]")
+        (is (vector? rows) "TableHead rows should be a vector")
+        
+        ;; Each row is [row-attrs, cells]
+        (is (every? vector? rows) "Each row should be a vector")
+        (let [[row-attrs cells] (first rows)]
+          (is (vector? row-attrs) "Row attrs should be a vector")
+          (is (vector? cells) "Row cells should be a vector")))
+      
+      ;; TableHead should NOT be an object like {:t "TableHead" :c ...}
+      (is (not (map? head)) "TableHead should not be a map/object"))))
+
+
+(deftest test-pandoc-table-body-format
+  (testing "TableBody is array format in bodies array"
+    (let [results [{:id 1 :name "test"}
+                   {:id 2 :name "test2"}]
+          table (sqlite-exec/make-pandoc-table results)
+          bodies (nth (:c table) 4)]  ; Bodies is 5th element
+      
+      ;; Bodies is an array of body elements
+      (is (vector? bodies) "Bodies should be a vector")
+      (is (pos? (count bodies)) "Bodies should not be empty")
+      
+      ;; Each body is [attrs, row-head-cols, head-rows, body-rows]
+      (let [body (first bodies)]
+        (is (vector? body) "Body should be a vector")
+        (is (= 4 (count body)) "Body should have 4 elements")
+        
+        (let [[attrs row-head-cols head-rows body-rows] body]
+          (is (vector? attrs) "Body attrs should be a vector")
+          (is (number? row-head-cols) "Row head cols should be a number")
+          (is (vector? head-rows) "Head rows should be a vector")
+          (is (vector? body-rows) "Body rows should be a vector")
+          
+          ;; Each body row is [row-attrs, cells]
+          (is (= 2 (count body-rows)) "Should have 2 data rows")
+          (is (every? vector? body-rows) "Each row should be a vector")
+          
+          (let [[row-attrs cells] (first body-rows)]
+            (is (vector? row-attrs) "Row attrs should be a vector")
+            (is (vector? cells) "Row cells should be a vector"))))
+      
+      ;; Body should NOT be an object like {:t "TableBody" :c ...}
+      (is (not (some map? bodies)) "Bodies should not contain map/object"))))
+
+
+(deftest test-pandoc-table-cell-format
+  (testing "Table cells have full structure [attrs, align, rowspan, colspan, blocks]"
+    (let [results [{:id 1 :name "test"}]
+          table (sqlite-exec/make-pandoc-table results)
+          head (nth (:c table) 3)
+          [_attrs rows] head
+          [_row-attrs cells] (first rows)
+          cell (first cells)]
+      
+      ;; Cell must be [attrs, alignment, rowspan, colspan, blocks]
+      (is (vector? cell) "Cell should be a vector")
+      (is (= 5 (count cell)) "Cell should have 5 elements")
+      
+      (let [[attrs alignment rowspan colspan blocks] cell]
+        (is (vector? attrs) "Cell attrs should be a vector")
+        (is (= 3 (count attrs)) "Cell attrs should be [id, classes, kvs]")
+        
+        (is (map? alignment) "Alignment should be a map")
+        (is (= "AlignDefault" (:t alignment)) "Alignment should have :t key")
+        
+        (is (number? rowspan) "Rowspan should be a number")
+        (is (= 1 rowspan) "Default rowspan should be 1")
+        
+        (is (number? colspan) "Colspan should be a number")
+        (is (= 1 colspan) "Default colspan should be 1")
+        
+        (is (vector? blocks) "Blocks should be a vector")
+        (is (pos? (count blocks)) "Blocks should not be empty"))
+      
+      ;; Cell should NOT be just blocks like {:t "Plain" :c ...}
+      (is (not (map? cell)) "Cell should not be a simple map/object"))))
+
+
+(deftest test-pandoc-table-foot-format
+  (testing "TableFoot is array format [attrs, rows]"
+    (let [results [{:id 1}]
+          table (sqlite-exec/make-pandoc-table results)
+          foot (nth (:c table) 5)]  ; TableFoot is 6th element
+      
+      ;; TableFoot must be array: [attrs, rows]
+      (is (vector? foot) "TableFoot should be a vector")
+      (is (= 2 (count foot)) "TableFoot should have 2 elements")
+      
+      (let [[attrs rows] foot]
+        (is (vector? attrs) "TableFoot attrs should be a vector")
+        (is (vector? rows) "TableFoot rows should be a vector")
+        (is (empty? rows) "TableFoot rows should be empty for our tables"))
+      
+      ;; TableFoot should NOT be an object
+      (is (not (map? foot)) "TableFoot should not be a map/object"))))
+
 (deftest test-transform-sqlite-exec-block
   (testing "transform-sqlite-exec-block executes SQL"
     (let [node {:t "CodeBlock"
