@@ -1,0 +1,2 @@
+{:hooks
+ {:analyze-call {etaoin.api/with-firefox etaoin.with-firefox/with-firefox}}}
