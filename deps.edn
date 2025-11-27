@@ -1,4 +1,4 @@
- {:deps
+{:deps
  {org.clojure/clojure {:mvn/version "1.12.3"}
   metosin/malli {:mvn/version "0.19.2"}
   cli-matic/cli-matic {:mvn/version "0.5.4"}
@@ -22,13 +22,12 @@
   ;; Database migrations
   dev.weavejester/ragtime {:mvn/version "0.12.1"}
   dev.weavejester/ragtime.next-jdbc {:mvn/version "0.9.4"}
+  
+  ;; GraalVM Polyglot (for JavaScript and Python filters)
   org.graalvm.polyglot/polyglot {:mvn/version "25.0.0"}
   org.graalvm.truffle/truffle-runtime {:mvn/version "25.0.0"}
   org.graalvm.js/js-language {:mvn/version "25.0.0"}
-  org.graalvm.python/python-language {:mvn/version "25.0.0"}
-
-
-}
+  org.graalvm.python/python-language {:mvn/version "25.0.0"}}
 
  :paths ["src"
          "classes"

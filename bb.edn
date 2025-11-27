@@ -84,9 +84,29 @@
    (do
      (clojure "-M:dev:format -m cljstyle.main check scripts src dev"))}
 
-  ci
-  {:doc "Runs linting and tests for the CI"
-   :task (do (run 'clean)
-             (run 'fmt-check)
-             (run 'lint)
-             (run 'test))}}}
+   ci
+   {:doc "Runs linting and tests for the CI"
+    :task (do (run 'clean)
+              (run 'fmt-check)
+              (run 'lint)
+              (run 'test))}
+
+   build-native-lite
+   {:doc "Build lightweight native image (no JS/Python polyglot)"
+    :task (do
+            (bling/callout {:type :info}
+                           (bling/bling [:bold "Building polydoc-lite native image"]))
+            (run 'clean)
+            (run 'compile)
+            (clojure "-M:jvm-base:uberdeps --main-class polydoc.main")
+            (shell "native-image @native-image-config/native-image-lite.args -jar target/polydoc.jar"))}
+
+   build-native-full
+   {:doc "Build full native image (with JS/Python polyglot)"
+    :task (do
+            (bling/callout {:type :info}
+                           (bling/bling [:bold "Building polydoc-full native image"]))
+            (run 'clean)
+            (run 'compile)
+            (clojure "-M:jvm-base:uberdeps --main-class polydoc.main")
+            (shell "native-image @native-image-config/native-image-full.args -jar target/polydoc.jar"))}}}
