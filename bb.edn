@@ -95,6 +95,7 @@
    (do
      (clojure "-M:dev:format -m cljstyle.main check scripts src dev"))}
 
+
     ci
     {:doc "Runs linting and tests for the CI"
      :task (do (run 'clean)

@@ -80,6 +80,12 @@
                       :replace-paths []
                       :main-opts ["-m" "uberdeps.uberjar"]}
 
+           :lite
+           {:exclusions [org.graalvm.polyglot/polyglot
+                         org.graalvm.truffle/truffle-runtime
+                         org.graalvm.js/js-language
+                         org.graalvm.python/python-language]}
+
            :outdated
            {:extra-deps {olical/depot {:mvn/version "1.8.4"}}}
 
