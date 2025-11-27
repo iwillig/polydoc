@@ -1,8 +1,9 @@
 #kaocha/v1
-{:tests [{:id :unit
-          :test-paths ["test"]
-          :source-paths ["src"]}]
- :plugins [:kaocha.plugin/profiling
+{:tests           [{:id           :unit
+                    :test-paths   ["test"]
+                    :source-paths ["src"]}]
+ :kaocha/reporter [kaocha.report/documentation]
+ :plugins         [:kaocha.plugin/profiling
            :kaocha.plugin/junit-xml]
- :color? true
- :fail-fast? false}
+ :color?          false
+ :fail-fast?      false}
