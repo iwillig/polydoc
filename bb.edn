@@ -47,17 +47,24 @@
   compile {:doc "Compile Main Clojure namespace"
            :task (clojure "-M -e \"(compile 'polydoc.main)\"")}
 
-  build-uberjar {:doc "Build UberJar Jar"
-                 :task (clojure "-M:jvm-base:uberdeps --main-class polydoc.main")}
+   build-uberjar {:doc "Build UberJar"
+                  :task (clojure "-M:jvm-base:uberdeps"
+                                 "--main-class" "polydoc.main"
+                                 "--target" "target/polydoc.jar")}
 
-  build-gvm {:doc "Build GraalVM native image"
-             :task (shell "native-image --no-fallback --initialize-at-build-time -jar target/polydoc.jar")}
+   build-native {:doc "Build GraalVM native image with all filters"
+                 :task (shell "native-image"
+                              "@native-image-config/native-image.args"
+                              "-jar" "target/polydoc.jar")}
 
-  build-cli {:doc "Rebuild Command Line Tool"
-             :task (do (run 'clean)
-                       (run 'compile)
-                       (run 'build-uberjar)
-                       (run 'build-gvm))}
+   build-cli {:doc "Build complete native CLI (clean, compile, uberjar, native-image)"
+              :task (do
+                      (bling/callout {:type :info}
+                                     (bling/bling [:bold "Building polydoc native CLI"]))
+                      (run 'clean)
+                      (run 'compile)
+                      (run 'build-uberjar)
+                      (run 'build-native))}
 
   outdated
   {:doc "Run command to detect outdate version of our deps"
@@ -84,29 +91,10 @@
    (do
      (clojure "-M:dev:format -m cljstyle.main check scripts src dev"))}
 
-   ci
-   {:doc "Runs linting and tests for the CI"
-    :task (do (run 'clean)
-              (run 'fmt-check)
-              (run 'lint)
-              (run 'test))}
+    ci
+    {:doc "Runs linting and tests for the CI"
+     :task (do (run 'clean)
+               (run 'fmt-check)
+               (run 'lint)
+               (run 'test))}}}
 
-   build-native-lite
-   {:doc "Build lightweight native image (no JS/Python polyglot)"
-    :task (do
-            (bling/callout {:type :info}
-                           (bling/bling [:bold "Building polydoc-lite native image"]))
-            (run 'clean)
-            (run 'compile)
-            (clojure "-M:jvm-base:uberdeps --main-class polydoc.main")
-            (shell "native-image @native-image-config/native-image-lite.args -jar target/polydoc.jar"))}
-
-   build-native-full
-   {:doc "Build full native image (with JS/Python polyglot)"
-    :task (do
-            (bling/callout {:type :info}
-                           (bling/bling [:bold "Building polydoc-full native image"]))
-            (run 'clean)
-            (run 'compile)
-            (clojure "-M:jvm-base:uberdeps --main-class polydoc.main")
-            (shell "native-image @native-image-config/native-image-full.args -jar target/polydoc.jar"))}}}

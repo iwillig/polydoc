@@ -29,9 +29,7 @@
    [polydoc.book.search :as search]
    [polydoc.filters.clojure-exec :as clj-exec]
    [polydoc.filters.include :as include]
-   [polydoc.filters.javascript-exec :as js-exec]
    [polydoc.filters.plantuml :as plantuml]
-   [polydoc.filters.python-exec :as py-exec]
    [polydoc.filters.sqlite-exec :as sqlite-exec]))
 
 
@@ -49,14 +47,10 @@
     "sqlite" (sqlite-exec/main {:input input :output output})
     "plantuml" (plantuml/main {:input input :output output})
     "include" (include/main {:input input :output output})
-    "javascript-exec" (js-exec/main {:input input :output output})
-    "js-exec" (js-exec/main {:input input :output output})
-    "python-exec" (py-exec/main {:input input :output output})
-    "py-exec" (py-exec/main {:input input :output output})
     ;; Default case
     (binding [*out* *err*]
       (println "ERROR: Unknown filter type:" type)
-      (println "Available filters: clojure-exec, sqlite-exec, plantuml, include, javascript-exec, python-exec")
+      (println "Available filters: clojure-exec, sqlite-exec, plantuml, include")
       (System/exit 1))))
 
 
@@ -153,7 +147,7 @@
                :description "Execute a Pandoc filter"
                :opts [{:option "type"
                        :short "t"
-                       :as "Filter type (clojure-exec, sqlite-exec, plantuml, javascript-exec, include)"
+                       :as "Filter type (clojure-exec, sqlite-exec, plantuml, include)"
                        :type :string
                        :required true}
                       {:option "input"

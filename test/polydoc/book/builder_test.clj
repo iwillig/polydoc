@@ -179,7 +179,6 @@ Some content here.")
     (testing "contains expected filters"
       (is (contains? builder/filter-registry "clojure-exec"))
       (is (contains? builder/filter-registry "sqlite-exec"))
-      (is (contains? builder/filter-registry "javascript-exec"))
       (is (contains? builder/filter-registry "plantuml"))
       (is (contains? builder/filter-registry "include")))
     

@@ -36,9 +36,7 @@
    [polydoc.db.schema :as schema]
    [polydoc.filters.clojure-exec :as clj-exec]
    [polydoc.filters.include :as include]
-   [polydoc.filters.javascript-exec :as js-exec]
    [polydoc.filters.plantuml :as plantuml]
-   [polydoc.filters.python-exec :as py-exec]
    [polydoc.filters.sqlite-exec :as sqlite-exec]))
 
 
@@ -91,10 +89,6 @@
   {"clojure-exec" clj-exec/clojure-exec-filter
    "sqlite-exec" sqlite-exec/sqlite-exec-filter
    "sqlite" sqlite-exec/sqlite-exec-filter
-   "javascript-exec" js-exec/javascript-exec-filter
-   "js-exec" js-exec/javascript-exec-filter
-   "python-exec" py-exec/python-exec-filter
-   "py-exec" py-exec/python-exec-filter
    "plantuml" plantuml/plantuml-filter
    "include" include/include-filter})
 

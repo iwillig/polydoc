@@ -19,15 +19,9 @@
   http-kit/http-kit {:mvn/version "2.8.0"}
   hiccup/hiccup {:mvn/version "2.0.0-RC3"}
 
-  ;; Database migrations
-  dev.weavejester/ragtime {:mvn/version "0.12.1"}
-  dev.weavejester/ragtime.next-jdbc {:mvn/version "0.9.4"}
-  
-  ;; GraalVM Polyglot (for JavaScript and Python filters)
-  org.graalvm.polyglot/polyglot {:mvn/version "25.0.0"}
-  org.graalvm.truffle/truffle-runtime {:mvn/version "25.0.0"}
-  org.graalvm.js/js-language {:mvn/version "25.0.0"}
-  org.graalvm.python/python-language {:mvn/version "25.0.0"}}
+   ;; Database migrations
+   dev.weavejester/ragtime {:mvn/version "0.12.1"}
+   dev.weavejester/ragtime.next-jdbc {:mvn/version "0.9.4"}}
 
  :paths ["src"
          "classes"
