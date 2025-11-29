@@ -13,7 +13,6 @@
   io.github.paintparty/bling {:mvn/version "0.8.8"}
   dev.glossa/metazoa {:mvn/version "0.2.298"}
   mvxcvi/puget {:mvn/version "1.3.4"}
-  com.github.clojure-lsp/clojure-lsp {:mvn/version "2025.08.25-14.21.46"}
 
   ;; HTTP server and HTML generation
   http-kit/http-kit {:mvn/version "2.8.0"}
