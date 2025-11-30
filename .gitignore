@@ -2,3 +2,5 @@
 /.lsp/
 /.clj-kondo/
 /.cpcache/
+/polydoc
+/classes/
