@@ -186,28 +186,28 @@
   (let [output-dir (or output-dir ".")
         title (or title "My Book")
         book-id (or book-id (slugify title))]
-    
+
     ;; Create directory structure
     (create-directory-structure output-dir)
-    
+
     ;; Generate files
     (write-file (io/file output-dir "polydoc.yml")
                 (generate-polydoc-yml {:title title
                                        :author author
                                        :book-id book-id}))
-    
+
     (write-file (io/file output-dir "sections" "01-introduction.md")
                 (generate-introduction-md title))
-    
+
     (write-file (io/file output-dir "sections" "02-getting-started.md")
                 (generate-getting-started-md))
-    
+
     (write-file (io/file output-dir "sections" "03-advanced.md")
                 (generate-advanced-md))
-    
+
     (write-file (io/file output-dir "README.md")
                 (generate-readme-md title))
-    
+
     ;; Return summary
     {:output-dir (.getCanonicalPath (io/file output-dir))
      :title title

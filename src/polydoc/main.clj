@@ -141,21 +141,21 @@
       (binding [*out* *err*]
         (println "ERROR: Database file not found:" database)
         (System/exit 1)))
-    
+
     ;; Create and start viewer system
     (println "\nStarting Polydoc viewer...")
     (println "Database:" database)
     (println "Port:" port)
     (println "\nServer starting at http://localhost:" port)
     (println "Press Ctrl+C to stop\n")
-    
+
     (let [_system (component/start
                    (viewer/viewer-system {:database database
-                                         :port port}))]
+                                          :port port}))]
       ;; Keep the server running
       ;; Block the main thread to prevent exit
       @(promise))
-    
+
     (catch Exception e
       (binding [*out* *err*]
         (println "ERROR:" (.getMessage e))
@@ -186,13 +186,13 @@
   (try
     (when interactive
       (println "Interactive mode not yet implemented. Using provided options."))
-    
+
     (let [result (gen-book/generate-book
                   {:output-dir output-dir
                    :title title
                    :author author
                    :book-id book-id})]
-      
+
       (println "\nBook project generated successfully!")
       (println "\nLocation:" (:output-dir result))
       (println "Title:" (:title result))
@@ -205,7 +205,7 @@
       (println "  2. Add your content in sections/")
       (println "  3. Build with: clojure -M:main book -c polydoc.yml -o output/")
       0)
-    
+
     (catch Exception e
       (binding [*out* *err*]
         (println "ERROR:" (.getMessage e))
@@ -284,56 +284,56 @@
                :runs search-cmd}
 
               {:command "view"
-                :description "Start interactive documentation viewer"
-                :opts [{:option "database"
-                        :short "d"
-                        :as "SQLite database file"
-                        :type :string
-                        :required true}
-                       {:option "port"
-                        :short "p"
-                        :as "HTTP server port"
-                        :type :int
-                        :default 8080}]
-                :runs view-cmd}
+               :description "Start interactive documentation viewer"
+               :opts [{:option "database"
+                       :short "d"
+                       :as "SQLite database file"
+                       :type :string
+                       :required true}
+                      {:option "port"
+                       :short "p"
+                       :as "HTTP server port"
+                       :type :int
+                       :default 8080}]
+               :runs view-cmd}
 
-               {:command "config"
-                :description "Display configuration as JSON"
-                :opts [{:option "config"
-                        :short "c"
-                        :as "Book configuration file (YAML)"
-                        :type :string
-                        :required true}]
-                :runs config-status-cmd}
+              {:command "config"
+               :description "Display configuration as JSON"
+               :opts [{:option "config"
+                       :short "c"
+                       :as "Book configuration file (YAML)"
+                       :type :string
+                       :required true}]
+               :runs config-status-cmd}
 
-               {:command "gen"
-                :description "Generate new Polydoc projects"
-                :subcommands [{:command "book"
-                               :description "Generate a new book project"
-                               :opts [{:option "output-dir"
-                                       :short "o"
-                                       :as "Output directory (default: current directory)"
-                                       :type :string
-                                       :default "."}
-                                      {:option "title"
-                                       :short "t"
-                                       :as "Book title"
-                                       :type :string
-                                       :default "My Book"}
-                                      {:option "author"
-                                       :short "a"
-                                       :as "Author name"
-                                       :type :string}
-                                      {:option "book-id"
-                                       :short "b"
-                                       :as "Book ID (auto-generated from title if not provided)"
-                                       :type :string}
-                                      {:option "interactive"
-                                       :short "i"
-                                       :as "Interactive mode"
-                                       :type :with-flag
-                                       :default false}]
-                               :runs gen-book-cmd}]}]})
+              {:command "gen"
+               :description "Generate new Polydoc projects"
+               :subcommands [{:command "book"
+                              :description "Generate a new book project"
+                              :opts [{:option "output-dir"
+                                      :short "o"
+                                      :as "Output directory (default: current directory)"
+                                      :type :string
+                                      :default "."}
+                                     {:option "title"
+                                      :short "t"
+                                      :as "Book title"
+                                      :type :string
+                                      :default "My Book"}
+                                     {:option "author"
+                                      :short "a"
+                                      :as "Author name"
+                                      :type :string}
+                                     {:option "book-id"
+                                      :short "b"
+                                      :as "Book ID (auto-generated from title if not provided)"
+                                      :type :string}
+                                     {:option "interactive"
+                                      :short "i"
+                                      :as "Interactive mode"
+                                      :type :with-flag
+                                      :default false}]
+                              :runs gen-book-cmd}]}]})
 
 
 (defn -main

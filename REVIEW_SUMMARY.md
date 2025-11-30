@@ -1,131 +1,178 @@
-# Polydoc Review Summary
+# Configuration System Review - Executive Summary
 
-**Date:** 2025-11-24  
-**Status:** 22.9% Complete | Strong Foundation | Ready for Next Phase
+**Date:** 2025-11-29  
+**Full Review:** See `CONFIG_SYSTEM_REVIEW.md`
 
-## Quick Status
+## TL;DR
 
-✅ **Working:** CLI framework, 2 filters (Clojure, SQLite), 28 passing tests, good docs  
-🔴 **Fix Now:** 2 lint warnings (5 min fix)  
-🟡 **Next:** 4 more filters (PlantUML, Include, JavaScript, Python)  
-📋 **Future:** Book building, search, viewer, GraalVM compilation
+Polydoc uses a **YAML-based configuration system** (`polydoc.yml`) with Malli schema validation. The system is well-designed with clear separation of concerns, good defaults, and comprehensive test coverage.
 
-## Test Results
+## Configuration at a Glance
 
-```
-28 tests, 91 assertions, 0 failures ✅
-Total runtime: ~0.17 seconds
-```
+### Minimal Book Configuration
 
-## Lint Results
-
-```
-2 warnings:
-1. Missing require: clojure.pprint in src/polydoc/filters/core.clj:180
-2. Unused require: polydoc.filters.core in test/polydoc/filters/sqlite_exec_test.clj:5
+```yaml
+title: "My Book"
+sections:
+  - intro.md
+  - chapter1.md
 ```
 
-## Files Created
+That's all you need! Polydoc fills in sensible defaults for everything else.
 
-1. **COMPLETION_PLAN.md** - Complete 8-phase implementation plan (no time estimates)
-2. **PROJECT_REVIEW.md** - Comprehensive project analysis with metrics
-3. **REVIEW_SUMMARY.md** - This quick reference
+### Full Book Configuration
 
-## Next Actions
+```yaml
+# Standard Pandoc metadata
+title: "My Book"
+author: "Author Name"
+date: "2025-11-25"
+lang: "en-US"
+toc: true
+toc-depth: 3
+css:
+  - css/style.css
 
-**Immediate (Do First):**
-1. Fix 2 lint warnings
-2. Run tests to verify
-3. Commit clean code
+# Polydoc-specific configuration
+book:
+  id: "my-book"                    # Unique identifier (auto-generated from title if omitted)
+  version: "1.0.0"
+  database: "polydoc.db"            # SQLite database path
+  output-dir: "build/"
+  filters:                          # Global filters for all sections
+    - clojure-exec
+    - plantuml
+    - include
 
-**Short Term (Phase 2):**
-1. PlantUML filter
-2. Include filter  
-3. JavaScript/Python filters
-
-**Medium Term (Phases 3-5):**
-1. Book building system
-2. Search with FTS5
-3. HTTP viewer
-
-**Long Term (Phases 6-8):**
-1. Testing & quality (>80% coverage)
-2. GraalVM compilation
-3. Release (Homebrew formula)
-
-## Key Strengths
-
-- ✅ Clean, idiomatic Clojure code
-- ✅ Excellent test coverage for implemented features
-- ✅ Well-documented with examples
-- ✅ Working REPL-driven development flow
-- ✅ Easy to extend (proven with 2 working filters)
-
-## Architecture
-
-```
-Markdown → Pandoc → JSON AST → Polydoc Filter → Modified AST → Pandoc → Output
-                                     ↓
-                        Core utilities + Filter implementations
+# Sections with per-section overrides
+sections:
+  - intro.md                        # Simple format
+  - file: tutorial.md               # Extended format
+    title: "Tutorial"
+    filters: [clojure-exec]         # Override global filters
+    metadata:
+      difficulty: beginner
 ```
 
-**Pattern for new filters:**
-1. Create `src/polydoc/filters/name.clj`
-2. Detect code blocks by class
-3. Process and transform
-4. Return modified AST
-5. Register in `main.clj`
-6. Add tests
-7. Create example in `examples/`
-
-## Quick Commands
+## CLI Commands
 
 ```bash
-# Development
-bb nrepl              # Start REPL
-bb lint               # Lint code (should be 0 warnings)
-bb test               # Run tests (should be 28 passing)
-bb main --help        # Test CLI
+# Build a book
+clojure -M:main book -c polydoc.yml -o output/
 
-# In REPL
-(require 'dev)
-(in-ns 'dev)
-(refresh)             # Reload code
-(lint)                # Run linter
-(run-all)             # Run tests
+# Execute a filter on Pandoc AST
+clojure -M:main filter -t clojure-exec -i input.json -o output.json
+
+# Search documentation
+clojure -M:main search -d polydoc.db -q "search query" -l 10
+
+# Start viewer (coming soon)
+clojure -M:main view -d polydoc.db -p 8080
 ```
 
-## Resources
+## Key Design Patterns
 
-- **COMPLETION_PLAN.md**: Full implementation roadmap
-- **PROJECT_REVIEW.md**: Detailed analysis and metrics
-- **DEVELOPMENT_PLAN.md**: Original plan (885 lines)
-- **PROGRESS.md**: Progress tracking
-- **README.md**: User documentation
-- **examples/**: Working examples for both filters
+1. **Schema Validation** - Malli schema with humanized error messages
+2. **Polymorphic Sections** - Simple string or extended map format
+3. **Path Resolution** - All file paths resolved to absolute during loading
+4. **Sensible Defaults** - Works out-of-the-box with minimal config
+5. **Filter Registry** - Easy to add new filters
 
-## Success Criteria (from plan)
+## Architecture Highlights
 
-**Functional:**
-- All filters implemented ✅ 2/6
-- Book building works ⏳
-- Search works ⏳
-- Viewer works ⏳
-- Native binary works ⏳
-- Test coverage >80% ✅ (for current features)
+```
+polydoc.yml (YAML)
+    ↓
+Load & Validate (Malli)
+    ↓
+Resolve Paths (absolute)
+    ↓
+Initialize Database (SQLite + Ragtime)
+    ↓
+Process Sections (Pandoc filters)
+    ↓
+Generate Output (HTML, etc.)
+```
 
-**Quality:**
-- Zero critical bugs ✅
-- Zero lint warnings ⚠️ (2 warnings, easy fix)
-- All tests passing ✅
-- Documentation complete ✅ (for current features)
-- Examples work ✅
-- CI/CD green ⏳
+## What Works Well ✅
+
+- Schema validation with clear error messages
+- Flexible section configuration (string or map)
+- Comprehensive test coverage (metadata_test.clj)
+- Clean separation: config → database → processing → output
+- Sensible defaults for everything
+- Absolute path resolution (no ambiguity)
+
+## Quick Wins ⚠️
+
+1. **Add example polydoc.yml files**
+   - Minimal, standard, and advanced examples
+   - Add to `examples/` directory
+
+2. **Document filter behavior**
+   - Section filters **replace** (not extend) global filters
+   - Add clear examples in docs
+
+3. **Database path resolution**
+   - Currently relative to CWD
+   - Should be relative to polydoc.yml like section files
+
+4. **Add validation command**
+   ```bash
+   clojure -M:main validate -c polydoc.yml
+   ```
+
+## Configuration Extension Points
+
+### Add a New Filter
+
+```clojure
+;; 1. Create filter namespace
+(ns polydoc.filters.my-filter
+  (:require [clojure.walk :as walk]))
+
+(defn my-filter [ast]
+  (walk/postwalk transform-fn ast))
+
+;; 2. Register in polydoc.book.builder
+(def filter-registry
+  {"my-filter" my-filter/my-filter
+   ...})
+```
+
+### Add a New Field
+
+```clojure
+;; 1. Add to Malli schema
+[:new-field {:optional true} :string]
+
+;; 2. Add getter function
+(defn get-new-field [metadata]
+  (get-in metadata [:book :new-field] "default"))
+
+;; 3. Use in builder
+(let [value (metadata/get-new-field metadata)]
+  ...)
+```
+
+## Files to Know
+
+### Core
+- `src/polydoc/main.clj` - CLI configuration (cli-matic)
+- `src/polydoc/book/metadata.clj` - YAML parsing & validation (Malli)
+- `src/polydoc/book/builder.clj` - Configuration → build pipeline
+
+### Database
+- `src/polydoc/db/schema.clj` - Schema management (Ragtime)
+- `resources/migrations/001-initial-schema.edn` - Database schema
+
+### Tests
+- `test/polydoc/book/metadata_test.clj` - Configuration testing
 
 ## Conclusion
 
-**Polydoc has a solid foundation and is ready for expansion.**
+**Solid foundation** with clear architecture and good test coverage. Ready for use with a few documentation improvements recommended.
 
-The code is clean, well-tested, and follows Clojure best practices. The architecture makes it easy to add new filters. Fix the 2 lint warnings, then proceed with implementing the remaining filters following the established patterns.
-
-See **COMPLETION_PLAN.md** for detailed implementation steps.
+**Rating: 8.5/10**
+- Strong: Architecture, validation, testing
+- Improve: Documentation, examples, minor edge cases
